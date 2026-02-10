@@ -2,6 +2,7 @@ package com.ecommerce.ecommercewebsite.Controllers;
 
 import com.ecommerce.ecommercewebsite.dto.AddToCartRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.AddToCartResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.UpdateCartRequestDTO;
 import com.ecommerce.ecommercewebsite.model.Cart;
 import com.ecommerce.ecommercewebsite.model.CartItem;
 import com.ecommerce.ecommercewebsite.model.User;
@@ -9,6 +10,7 @@ import com.ecommerce.ecommercewebsite.repositories.CartRepository;
 import com.ecommerce.ecommercewebsite.repositories.UserRepository;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.UserService;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -37,6 +39,32 @@ public class UserController {
     public ResponseEntity<ApiResponse<List<AddToCartResponseDTO>>> getCart(@AuthenticationPrincipal User user) {
         List<AddToCartResponseDTO> result = userService.getCart(user);
         ApiResponse<List<AddToCartResponseDTO>> apiResponse = new ApiResponse<>("Cart has been successfully  fetched", result);
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    //  update  cart means  change the    quantity of the cart
+    @PutMapping("/cart/update/{cartItemId}")
+    public ResponseEntity<ApiResponse<String>> updateCart(@PathVariable Long cartItemId, Principal principal, @RequestBody UpdateCartRequestDTO updateCartRequestDTO) {
+        String email = principal.getName();
+        String msg = userService.updateCart(cartItemId, email, updateCartRequestDTO);
+        ApiResponse<String> apiResponse = new ApiResponse<>(msg, null);
+        return ResponseEntity.ok(apiResponse);
+
+    }
+
+    // delete  cart item
+    @DeleteMapping("cart/delete/{cartItemId}")
+    public ResponseEntity<ApiResponse<String>> removeCartItem(@PathVariable Long cartItemId, Principal principal) {
+        String msg = userService.removeCartItem(cartItemId, principal);
+        ApiResponse<String> apiResponse = new ApiResponse<>(msg, null);
+        return ResponseEntity.ok(apiResponse);
+    }
+// remove all cart items
+
+    @DeleteMapping("/cart/clear/{cartId}")
+    public ResponseEntity<ApiResponse<String>> clearCart(@PathVariable Long cartId, Principal principal) {
+        String message = userService.clearAllCartItems(cartId, principal);
+        ApiResponse<String> apiResponse = new ApiResponse<>(message, null);
         return ResponseEntity.ok(apiResponse);
     }
 

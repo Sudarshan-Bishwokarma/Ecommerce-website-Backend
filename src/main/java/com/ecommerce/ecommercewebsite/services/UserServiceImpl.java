@@ -2,6 +2,8 @@ package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.AddToCartRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.AddToCartResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.UpdateCartRequestDTO;
+import com.ecommerce.ecommercewebsite.exception.CartNotFoundException;
 import com.ecommerce.ecommercewebsite.exception.ProductNotFoundException;
 import com.ecommerce.ecommercewebsite.exception.UserNotFoundException;
 import com.ecommerce.ecommercewebsite.model.Cart;
@@ -15,8 +17,12 @@ import com.ecommerce.ecommercewebsite.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.security.access.AccessDeniedException;
+
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -85,6 +91,61 @@ public class UserServiceImpl implements UserService {
         return dtos;
     }
 
+    @Override
+    public String updateCart(Long CartItemId, String email, UpdateCartRequestDTO updateCartRequestDTO) {
+        User user = userRepository.findByEmail(email).
+                orElseThrow(() -> new UserNotFoundException("User not found"));
+        CartItem cartItem = cartItemRepository.findById(CartItemId).
+                orElseThrow(() -> new CartNotFoundException("CartItem not found"));
+        // ownership check
+        if (cartItem.getCart().getUser().getId() != user.getId()) {
+            throw new AccessDeniedException("Access denied");
+        }
+        if (updateCartRequestDTO.getQuantity() <= 0) {
+            cartItemRepository.delete(cartItem);
+            return " Cart Item deleted successfully";
+        } else {
+            cartItem.setQuantity(updateCartRequestDTO.getQuantity());
+            cartItem.setTotalPrice(cartItem.getTotalPrice() * updateCartRequestDTO.getQuantity());
+            cartItemRepository.save(cartItem);
+            return "CertItem Successfully Updated";
+        }
+
+    }
+
+    @Override
+    public String removeCartItem(Long cartItemId, Principal principal) {
+        User user = userRepository.findByEmail(principal.getName()).
+                orElseThrow(() -> new UserNotFoundException("User not found"));
+        CartItem cartItem = cartItemRepository.findById(cartItemId).
+                orElseThrow(() -> new CartNotFoundException("CartItem not found"));
+        // check   cart ownership
+        if (cartItem.getCart().getUser().getId() != user.getId()) {
+            throw new AccessDeniedException("Access denied");
+        }
+        cartItemRepository.delete(cartItem); //no  return needed
+        System.out.println("Cart Item deleted successfully");
+
+        return "Cart Item Deleted Successfully";
+    }
+
+    @Override
+    public String clearAllCartItems(Long cartId, Principal principal) {
+        User user = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() -> new CartNotFoundException("Cart not found"));
+        // check  ownerShip
+        if (cart.getUser().getId() != user.getId()) {
+            throw new AccessDeniedException("Access denied");
+        }
+        cart.getItems().clear();
+        cartRepository.save(cart);
+        System.out.println("Cart Items deleted successfully");
+
+        return "Cart Item Deleted Successfully";
+    }
+
     // helper class
     private AddToCartResponseDTO mapToDTO(CartItem cartItem) {
         AddToCartResponseDTO responseDTO = new AddToCartResponseDTO();
@@ -98,3 +159,12 @@ public class UserServiceImpl implements UserService {
     }
 
 }
+
+/*
+Even if a user is logged in, we still check the database because login only tells us who the user is, not
+ the user still exists or is allowed to do actions. The database check makes sure the user is valid before doing business work like adding items to the cart.
+ */
+/*
+gged-in user adds a product, we find the user and their cart, update the product quantity if it’s already there,
+ or add it as a new item, then save.
+ */
