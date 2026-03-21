@@ -1,4 +1,4 @@
-package com.ecommerce.ecommercewebsite.Controllers.admin;
+package com.ecommerce.ecommercewebsite.controllers.admin;
 
 import com.ecommerce.ecommercewebsite.dto.AdminResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.AdminUpdateDTO;

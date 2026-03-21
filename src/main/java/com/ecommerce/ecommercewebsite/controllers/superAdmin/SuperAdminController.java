@@ -1,8 +1,7 @@
-package com.ecommerce.ecommercewebsite.Controllers.superAdmin;
+package com.ecommerce.ecommercewebsite.controllers.superAdmin;
 
 import com.ecommerce.ecommercewebsite.dto.AdminRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.AdminResponseDTO;
-import com.ecommerce.ecommercewebsite.model.User;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.SuperAdminService;
 import org.springframework.beans.factory.annotation.Autowired;

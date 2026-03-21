@@ -1,4 +1,4 @@
-package com.ecommerce.ecommercewebsite.Controllers.user;
+package com.ecommerce.ecommercewebsite.controllers.user;
 
 import com.ecommerce.ecommercewebsite.dto.OrderRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;

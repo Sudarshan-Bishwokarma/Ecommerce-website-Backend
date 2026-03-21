@@ -1,4 +1,4 @@
-package com.ecommerce.ecommercewebsite.Controllers;
+package com.ecommerce.ecommercewebsite.controllers;
 
 import com.ecommerce.ecommercewebsite.dto.ProfileResponseDTO;
 import com.ecommerce.ecommercewebsite.services.ProfileService;

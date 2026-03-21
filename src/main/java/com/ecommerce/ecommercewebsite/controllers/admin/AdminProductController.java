@@ -1,4 +1,4 @@
-package com.ecommerce.ecommercewebsite.Controllers.admin;
+package com.ecommerce.ecommercewebsite.controllers.admin;
 
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.dto.ProductRequestDTO;
