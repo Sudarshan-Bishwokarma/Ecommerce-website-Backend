@@ -1,6 +1,5 @@
-package com.ecommerce.ecommercewebsite.Controllers;
+package com.ecommerce.ecommercewebsite.Controllers.admin;
 
-import com.ecommerce.ecommercewebsite.dto.AdminRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.AdminResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.AdminUpdateDTO;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;

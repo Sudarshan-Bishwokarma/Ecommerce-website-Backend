@@ -1,10 +1,9 @@
-package com.ecommerce.ecommercewebsite.Controllers;
+package com.ecommerce.ecommercewebsite.Controllers.admin;
 
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.dto.ProductRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
 import com.ecommerce.ecommercewebsite.services.ProductService;
-import com.ecommerce.ecommercewebsite.services.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")

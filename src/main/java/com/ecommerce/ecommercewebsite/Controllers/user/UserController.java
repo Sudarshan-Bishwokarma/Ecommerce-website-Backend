@@ -1,16 +1,12 @@
-package com.ecommerce.ecommercewebsite.Controllers;
+package com.ecommerce.ecommercewebsite.Controllers.user;
 
 import com.ecommerce.ecommercewebsite.dto.AddToCartRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.AddToCartResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.UpdateCartRequestDTO;
-import com.ecommerce.ecommercewebsite.model.Cart;
-import com.ecommerce.ecommercewebsite.model.CartItem;
 import com.ecommerce.ecommercewebsite.model.User;
 import com.ecommerce.ecommercewebsite.repositories.CartRepository;
-import com.ecommerce.ecommercewebsite.repositories.UserRepository;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.UserService;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
