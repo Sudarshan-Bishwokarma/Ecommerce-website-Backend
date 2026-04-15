@@ -100,6 +100,20 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         return order.map(this::mapToDTO);
     }
 
+    @Override
+    public UpdateOrderStatusResponseDTO cancelOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException("Order not found"));
+        order.setStatus(OrderStatus.CANCELED);
+        Order savedOrder = orderRepository.save(order);
+        UpdateOrderStatusResponseDTO dto = new UpdateOrderStatusResponseDTO();
+        dto.setOrderId(savedOrder.getId());
+        dto.setOrderStatus(savedOrder.getStatus());
+        dto.setMessage("Order Cancelled");
+        dto.setUpdateTime(LocalDateTime.now());
+
+        return dto;
+    }
+
     //helper  class
     public OrderResponseDTO mapToDTO(Order order) {
         OrderResponseDTO orderResponseDTO = new OrderResponseDTO();

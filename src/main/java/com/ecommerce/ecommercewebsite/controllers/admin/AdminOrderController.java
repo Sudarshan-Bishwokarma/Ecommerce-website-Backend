@@ -91,5 +91,13 @@ public class AdminOrderController {
         return ResponseEntity.ok(apiResponse);
     }
 
+    //  cancel  order   by admin
+    @PutMapping("/order/{orderId}/cancel")
+    ResponseEntity<ApiResponse<UpdateOrderStatusResponseDTO>> cancelOrder(@PathVariable Long orderId) {
+        UpdateOrderStatusResponseDTO responseDTO = adminOrderService.cancelOrder(orderId);
+        ApiResponse<UpdateOrderStatusResponseDTO> apiResponse = new ApiResponse<>("Order Deleted Successfully", responseDTO);
+        return ResponseEntity.ok(apiResponse);
+
+    }
 
 }

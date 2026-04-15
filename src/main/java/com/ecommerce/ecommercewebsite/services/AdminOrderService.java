@@ -20,4 +20,6 @@ public interface AdminOrderService {
     public Page<OrderResponseDTO> getOrdersByDate(LocalDateTime startDate, LocalDateTime endDate, int page, int size);
 
     public Page<OrderResponseDTO> getOrderByEmail(String email, int page, int size);
+
+    public UpdateOrderStatusResponseDTO cancelOrder(Long orderId);
 }
