@@ -2,9 +2,11 @@ package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.*;
 import com.ecommerce.ecommercewebsite.exception.OrderNotFoundException;
+import com.ecommerce.ecommercewebsite.exception.UserNotFoundException;
 import com.ecommerce.ecommercewebsite.model.Order;
 import com.ecommerce.ecommercewebsite.model.OrderItem;
 import com.ecommerce.ecommercewebsite.model.OrderStatus;
+import com.ecommerce.ecommercewebsite.model.User;
 import com.ecommerce.ecommercewebsite.repositories.OrderRepository;
 import com.ecommerce.ecommercewebsite.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +24,11 @@ import java.util.List;
 public class AdminOrderServiceImpl implements AdminOrderService {
     @Autowired
     OrderRepository orderRepository;
+    @Autowired
+    UserRepository userRepository;
 
     @Override
-    public Page<OrderResponseDTO> getAllUsersOrders(String email, int page, int size) {
+    public Page<OrderResponseDTO> getAllUsersOrders(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Order> orderPage = orderRepository.findAll(pageable);
         return orderPage.map(this::mapToDTO);
@@ -85,6 +89,15 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Order> pageOrder = orderRepository.findByCreatedAtBetween(startDate, endDate, pageable);
         return pageOrder.map(this::mapToDTO);
+    }
+
+    @Override
+    public Page<OrderResponseDTO> getOrderByEmail(String email, int page, int size) {
+        User user = userRepository.findByEmail(email).
+                orElseThrow(() -> new UserNotFoundException("User Not Found "));
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Order> order = orderRepository.findByUser(user, pageable);
+        return order.map(this::mapToDTO);
     }
 
     //helper  class

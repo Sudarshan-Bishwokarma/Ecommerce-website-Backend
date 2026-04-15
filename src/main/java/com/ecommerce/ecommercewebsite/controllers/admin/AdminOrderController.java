@@ -28,11 +28,10 @@ public class AdminOrderController {
     @GetMapping("/orders")
     ResponseEntity<ApiResponse<Page<OrderResponseDTO>>> getOrders(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @AuthenticationPrincipal UserDetails userDetails
+            @RequestParam(defaultValue = "10") int size
+
     ) {
-        String email = userDetails.getUsername();
-        Page<OrderResponseDTO> orderResponseDTOPage = adminOrderService.getAllUsersOrders(email, page, size);
+        Page<OrderResponseDTO> orderResponseDTOPage = adminOrderService.getAllUsersOrders(page, size);
         ApiResponse<Page<OrderResponseDTO>> apiResponse = new ApiResponse<>("success", orderResponseDTOPage);
         return ResponseEntity.ok(apiResponse);
     }
@@ -52,7 +51,7 @@ public class AdminOrderController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam String status
 
-    ) {//  job@talentsathi.com
+    ) {
         Page<OrderResponseDTO> response = adminOrderService.getOrderByStatus(status, page, size);
         ApiResponse<Page<OrderResponseDTO>> apiResponse = new ApiResponse<>("success", response);
         return ResponseEntity.ok(apiResponse);
@@ -78,6 +77,18 @@ public class AdminOrderController {
         Page<OrderResponseDTO> result = adminOrderService.getOrdersByDate(startDate, endDate, page, size);
         ApiResponse<Page<OrderResponseDTO>> response = new ApiResponse<>("success", result);
         return ResponseEntity.ok(response);
+    }
+
+    //   get order by user email
+    @GetMapping("/orders/user")
+    public ResponseEntity<ApiResponse<Page<OrderResponseDTO>>> getOrderByUserEmail(
+            @RequestParam String email,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<OrderResponseDTO> response = adminOrderService.getOrderByEmail(email, page, size);
+        ApiResponse<Page<OrderResponseDTO>> apiResponse = new ApiResponse<>("success", response);
+        return ResponseEntity.ok(apiResponse);
     }
 
 
