@@ -114,6 +114,22 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         return dto;
     }
 
+    @Override
+    public OrderStatusSummaryDTO getOrderStatusSummary() {
+        long pending = orderRepository.countByStatus(OrderStatus.PENDING);
+        long delivered = orderRepository.countByStatus(OrderStatus.DELIVERED);
+        long shipped = orderRepository.countByStatus(OrderStatus.SHIPPED);
+        long cancelled = orderRepository.countByStatus(OrderStatus.CANCELED);
+        long paid = orderRepository.countByStatus(OrderStatus.PAID);
+        OrderStatusSummaryDTO orderStatusSummaryDTO = new OrderStatusSummaryDTO();
+        orderStatusSummaryDTO.setPending(pending);
+        orderStatusSummaryDTO.setDelivered(delivered);
+        orderStatusSummaryDTO.setShipped(shipped);
+        orderStatusSummaryDTO.setCancelled(cancelled);
+        orderStatusSummaryDTO.setPaid(paid);
+        return orderStatusSummaryDTO;
+    }
+
     //helper  class
     public OrderResponseDTO mapToDTO(Order order) {
         OrderResponseDTO orderResponseDTO = new OrderResponseDTO();

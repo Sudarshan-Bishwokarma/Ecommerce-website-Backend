@@ -1,9 +1,6 @@
 package com.ecommerce.ecommercewebsite.controllers.admin;
 
-import com.ecommerce.ecommercewebsite.dto.OrderDetailDTO;
-import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;
-import com.ecommerce.ecommercewebsite.dto.UpdateOrderStatusDTO;
-import com.ecommerce.ecommercewebsite.dto.UpdateOrderStatusResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.*;
 import com.ecommerce.ecommercewebsite.repositories.OrderRepository;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.AdminOrderService;
@@ -99,5 +96,14 @@ public class AdminOrderController {
         return ResponseEntity.ok(apiResponse);
 
     }
+
+    //   get  total  order status   for piechart
+    @GetMapping("/orders/status-summary")
+    public ResponseEntity<ApiResponse<OrderStatusSummaryDTO>> getOrderStatusSummary() {
+        OrderStatusSummaryDTO status = adminOrderService.getOrderStatusSummary();
+        ApiResponse<OrderStatusSummaryDTO> apiResponse = new ApiResponse<>("success", status);
+        return ResponseEntity.ok(apiResponse);
+    }
+
 
 }

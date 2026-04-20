@@ -1,9 +1,6 @@
 package com.ecommerce.ecommercewebsite.services;
 
-import com.ecommerce.ecommercewebsite.dto.OrderDetailDTO;
-import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;
-import com.ecommerce.ecommercewebsite.dto.UpdateOrderStatusDTO;
-import com.ecommerce.ecommercewebsite.dto.UpdateOrderStatusResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.*;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
@@ -22,4 +19,6 @@ public interface AdminOrderService {
     public Page<OrderResponseDTO> getOrderByEmail(String email, int page, int size);
 
     public UpdateOrderStatusResponseDTO cancelOrder(Long orderId);
+
+    public OrderStatusSummaryDTO getOrderStatusSummary();
 }
