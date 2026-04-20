@@ -4,6 +4,7 @@ import com.ecommerce.ecommercewebsite.dto.*;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface AdminOrderService {
     public Page<OrderResponseDTO> getAllUsersOrders(int page, int size);
@@ -21,4 +22,6 @@ public interface AdminOrderService {
     public UpdateOrderStatusResponseDTO cancelOrder(Long orderId);
 
     public OrderStatusSummaryDTO getOrderStatusSummary();
+
+    public List<MonthlyOrderDTO> getMonthlyOrders();
 }

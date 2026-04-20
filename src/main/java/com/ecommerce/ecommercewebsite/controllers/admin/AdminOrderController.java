@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -105,5 +106,12 @@ public class AdminOrderController {
         return ResponseEntity.ok(apiResponse);
     }
 
+    // get orders per month
+    @GetMapping("/orders/monthly")
+    public ResponseEntity<ApiResponse<List<MonthlyOrderDTO>>> getOrdersByMonth() {
+        List<MonthlyOrderDTO> monthlyOrderDTO = adminOrderService.getMonthlyOrders();
+        ApiResponse<List<MonthlyOrderDTO>> response = new ApiResponse<>("success", monthlyOrderDTO);
+        return ResponseEntity.ok(response);
 
+    }
 }

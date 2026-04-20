@@ -130,6 +130,12 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         return orderStatusSummaryDTO;
     }
 
+    @Override
+    public List<MonthlyOrderDTO> getMonthlyOrders() {
+
+        return orderRepository.getMonthlyOrders();
+    }
+
     //helper  class
     public OrderResponseDTO mapToDTO(Order order) {
         OrderResponseDTO orderResponseDTO = new OrderResponseDTO();
