@@ -4,11 +4,13 @@ import com.ecommerce.ecommercewebsite.dto.*;
 import com.ecommerce.ecommercewebsite.exception.ImagenNotFoundException;
 import com.ecommerce.ecommercewebsite.exception.OtpVerificationException;
 import com.ecommerce.ecommercewebsite.exception.PasswordException;
+import com.ecommerce.ecommercewebsite.exception.UserNotFoundException;
 import com.ecommerce.ecommercewebsite.model.Role;
 import com.ecommerce.ecommercewebsite.model.User;
 import com.ecommerce.ecommercewebsite.repositories.RoleRepository;
 import com.ecommerce.ecommercewebsite.repositories.UserRepository;
 import com.ecommerce.ecommercewebsite.security.JwtUtil;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,19 +41,21 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public JwtResponseDto loginUser(LoginRequestDTO request) {
-        // authenticate  the  user
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+        try {
+            // authenticate  the  user
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
+        } catch (Exception e) {
+            throw new UserNotFoundException("Login Failed");
+        }
         // extract  the use from the database
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         String role = user.getRole().getRole();
         // check verified
-        if (role.equals("ROLE_USER")) {
-            if (!user.isVerified()) {
-                throw new OtpVerificationException("Please verify  otp first!!");
-            }
+        if (!user.isVerified()) {
+            throw new OtpVerificationException("Please verify your account first");
         }
         String token = jwtUtil.generateToken(request.getEmail(), role);
         return new JwtResponseDto(request.getEmail(), token, role);
@@ -59,11 +63,29 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String registerUser(RegisterRequestDTO request, MultipartFile profile) {
+    public String registerUser(@Valid RegisterRequestDTO request, MultipartFile profile) {
         //  check if  exist the database or not
-        if (userRepository.existsByEmail(request.getEmail())) {
-            return "User already exists";
+        User existingUser = userRepository.findByEmail(request.getEmail()).orElse(null);
+        //  Case 1: User already exists and verified
+        if (existingUser != null && existingUser.isVerified()) {
+            return "User already exists! Please login.";
         }
+        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+        // case  2  :  if  user  exist   but  not  verified
+        if (existingUser != null && !existingUser.isVerified()) {
+            existingUser.setOtp(otp);
+            existingUser.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
+            userRepository.save(existingUser);
+            EmailDetailsDTO emailDetailsDTO = new EmailDetailsDTO(
+                    existingUser.getEmail(),
+                    "Hello " + existingUser.getName() +
+                            ",Your verification code(otp) is \n" + otp + "\n\n It  will expire in 10 minutes"
+                    , "Verify your email."
+            );
+            emailService.sendSimpleMail(emailDetailsDTO);
+            return "OTP send  successfully  to your  Gmail";
+        }
+//  case3: new user registration
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
@@ -78,9 +100,9 @@ public class AuthServiceImpl implements AuthService {
 
         Role role = roleRepository.findByRole("ROLE_USER");
         user.setRole(role); //You set the Role object in Java, but JPA stores only the role_id in the database.
-        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
         user.setOtp(otp);
         user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
+
         // save to the database
         User savedUser = userRepository.save(user);
         System.out.println("User is Saved in the database");

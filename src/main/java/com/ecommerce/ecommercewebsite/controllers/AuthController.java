@@ -26,7 +26,7 @@ public class AuthController {
         ApiResponse<JwtResponseDto> apiResponse = new ApiResponse<>("Login Successful!", response);
         return ResponseEntity.ok(apiResponse);
     }
-
+    
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> register(@RequestPart("data") String data, @RequestPart("file") MultipartFile profile) throws IOException {
         // Convert JSON string to DTO
