@@ -2,6 +2,7 @@ package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.OrderRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;
+import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import com.ecommerce.ecommercewebsite.exception.CartItemNotFoundException;
 import com.ecommerce.ecommercewebsite.exception.CartNotFoundException;
 import com.ecommerce.ecommercewebsite.exception.OrderNotFoundException;

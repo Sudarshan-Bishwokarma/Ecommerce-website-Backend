@@ -1,6 +1,6 @@
 package com.ecommerce.ecommercewebsite.dto;
 
-import com.ecommerce.ecommercewebsite.model.OrderStatus;
+import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import lombok.Data;
 
 @Data

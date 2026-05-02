@@ -2,7 +2,7 @@ package com.ecommerce.ecommercewebsite.repositories;
 
 import com.ecommerce.ecommercewebsite.dto.MonthlyOrderDTO;
 import com.ecommerce.ecommercewebsite.model.Order;
-import com.ecommerce.ecommercewebsite.model.OrderStatus;
+import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import com.ecommerce.ecommercewebsite.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

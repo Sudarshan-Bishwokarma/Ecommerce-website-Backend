@@ -1,6 +1,6 @@
 package com.ecommerce.ecommercewebsite.exception;
 
-public class CartNotFoundException extends ApiException {
+public class CartNotFoundException extends RuntimeException {
 
     public CartNotFoundException(String message) {
         super(message);

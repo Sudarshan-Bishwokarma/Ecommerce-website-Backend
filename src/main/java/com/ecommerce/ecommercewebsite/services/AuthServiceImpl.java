@@ -1,10 +1,8 @@
 package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.*;
-import com.ecommerce.ecommercewebsite.exception.ImagenNotFoundException;
-import com.ecommerce.ecommercewebsite.exception.OtpVerificationException;
-import com.ecommerce.ecommercewebsite.exception.PasswordException;
-import com.ecommerce.ecommercewebsite.exception.UserNotFoundException;
+import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
+import com.ecommerce.ecommercewebsite.exception.*;
 import com.ecommerce.ecommercewebsite.model.Role;
 import com.ecommerce.ecommercewebsite.model.User;
 import com.ecommerce.ecommercewebsite.repositories.RoleRepository;
@@ -13,6 +11,7 @@ import com.ecommerce.ecommercewebsite.security.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -41,21 +40,21 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public JwtResponseDto loginUser(LoginRequestDTO request) {
+        // extract  the use from the database
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ApiException(AuthErrorCode.INVALID_CREDENTIALS));
+        String role = user.getRole().getRole();
+        // check verified
+        if (!user.isVerified()) {
+            throw new ApiException(AuthErrorCode.NOT_VERIFIED);
+        }
         try {
             // authenticate  the  user
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
-        } catch (Exception e) {
-            throw new UserNotFoundException("Login Failed");
-        }
-        // extract  the use from the database
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        String role = user.getRole().getRole();
-        // check verified
-        if (!user.isVerified()) {
-            throw new OtpVerificationException("Please verify your account first");
+        } catch (BadCredentialsException e) {
+            throw new ApiException(AuthErrorCode.INVALID_CREDENTIALS);
         }
         String token = jwtUtil.generateToken(request.getEmail(), role);
         return new JwtResponseDto(request.getEmail(), token, role);

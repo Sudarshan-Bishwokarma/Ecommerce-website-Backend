@@ -1,7 +1,17 @@
 package com.ecommerce.ecommercewebsite.exception;
 
-public class ApiException  extends RuntimeException{
-    public ApiException(String message){
-            super(message);//   this calls the parent class constructor and  send this message to parent class”
+import lombok.Data;
+
+
+public class ApiException extends RuntimeException {
+    private final Enum<?> code;
+
+    public ApiException(Enum<?> code) {
+        super(code.name());
+        this.code = code;
+    }
+
+    public Enum<?> getCode() {
+        return code;
     }
 }
