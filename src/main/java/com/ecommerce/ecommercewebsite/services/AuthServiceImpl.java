@@ -63,11 +63,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String registerUser(@Valid RegisterRequestDTO request, MultipartFile profile) {
-        //  check if  exist the database or not
+        //  check if  exist in the database or not
         User existingUser = userRepository.findByEmail(request.getEmail()).orElse(null);
         //  Case 1: User already exists and verified
         if (existingUser != null && existingUser.isVerified()) {
-            return "User already exists! Please login.";
+            throw new ApiException(AuthErrorCode.USER_ALREADY_EXISTS);
         }
         String otp = String.valueOf(new Random().nextInt(900000) + 100000);
         // case  2  :  if  user  exist   but  not  verified
@@ -82,7 +82,7 @@ public class AuthServiceImpl implements AuthService {
                     , "Verify your email."
             );
             emailService.sendSimpleMail(emailDetailsDTO);
-            return "OTP send  successfully  to your  Gmail";
+            return "OTP_RESENT: OTP sent to your email. Please verify.";
         }
 //  case3: new user registration
         User user = new User();
@@ -114,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
                 , "Verify your email."
         );
 
-        emailService.sendSimpleMail(mail);  // 🔥 Trigger email
+        emailService.sendSimpleMail(mail);
         return "OTP sent to your email. Please verify.";
     }
 
