@@ -33,13 +33,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                // ✅ Disable CSRF for APIs
+                //  Disable CSRF for APIs
                 .csrf(csrf -> csrf.disable())
 
-                // ✅ ENABLE CORS (you forgot this earlier)
+                //  ENABLE CORS (you forgot this earlier)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // ✅ Endpoint permissions (unchanged)
+                //  Endpoint permissions (unchanged)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
@@ -48,12 +48,12 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // ✅ Stateless session (unchanged)
+                //  Stateless session (unchanged)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // ✅ Handle security errors properly (NEW - important)
+                //  Handle security errors properly (NEW - important)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setContentType("application/json");
@@ -64,13 +64,13 @@ public class SecurityConfig {
                         })
                 );
 
-        // ✅ JWT filter (unchanged)
+        // JWT filter (unchanged)
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // ✅ CORS CONFIG (unchanged, just used now)
+    //  CORS CONFIG (unchanged, just used now)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

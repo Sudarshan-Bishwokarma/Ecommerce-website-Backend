@@ -5,5 +5,7 @@ public enum AuthErrorCode {
     NOT_VERIFIED,
     OTP_EXPIRED,
     USER_NOT_FOUND,
-    USER_ALREADY_EXISTS
+    USER_ALREADY_EXISTS,
+    INVALID_OTP,
+    VERIFIED
 }

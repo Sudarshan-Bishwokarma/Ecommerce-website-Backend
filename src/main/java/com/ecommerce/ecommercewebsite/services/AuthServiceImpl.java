@@ -7,9 +7,11 @@ import com.ecommerce.ecommercewebsite.model.Role;
 import com.ecommerce.ecommercewebsite.model.User;
 import com.ecommerce.ecommercewebsite.repositories.RoleRepository;
 import com.ecommerce.ecommercewebsite.repositories.UserRepository;
+import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.security.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,8 +19,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Random;
 
@@ -45,8 +50,9 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ApiException(AuthErrorCode.INVALID_CREDENTIALS));
         String role = user.getRole().getRole();
         // check verified
-        if (!user.isVerified()) {
+        if (role.equals("ROLE_USER") && !user.isVerified()) {
             throw new ApiException(AuthErrorCode.NOT_VERIFIED);
+
         }
         try {
             // authenticate  the  user
@@ -121,27 +127,45 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public String verifyOtp(OtpVerifyDTO request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         if (user.isVerified()) {
-            return "User is already verified";
+            throw new ApiException(AuthErrorCode.VERIFIED);
         }
         if (user.getOtpExpiry() == null || user.getOtpExpiry().isBefore(LocalDateTime.now())) {
-            return "Otp is expired";
+            throw new ApiException(AuthErrorCode.OTP_EXPIRED);
         }
 
-        // check otp matches
-        if (request.getOtp().equals(user.getOtp())) {
-            user.setVerified(true);
-            user.setOtp(null);
-            user.setOtpExpiry(null);
-            userRepository.save(user);
-            return "Otp has been verified";
-        } else {
-            return "Invalid Otp";
+        if (!request.getOtp().equals(user.getOtp())) {
+            throw new ApiException(AuthErrorCode.INVALID_OTP);
         }
-
-
+        user.setVerified(true);
+        user.setOtp(null);
+        user.setOtpExpiry(null);
+        userRepository.save(user);
+        return "Otp has been verified";
     }
+
+    @Override
+    public String resendOtp(ResendOtpDTO request) {
+        User getuser = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
+        if (getuser.isVerified()) {
+            throw new ApiException(AuthErrorCode.VERIFIED);
+        }
+        SecureRandom random = new SecureRandom();
+        String otp = String.valueOf(100000 + random.nextInt(900000));
+        getuser.setOtp(otp);
+        getuser.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
+        userRepository.save(getuser);
+        EmailDetailsDTO mail = new EmailDetailsDTO(
+                getuser.getEmail(),
+                "Hello " + getuser.getName() +
+                        ",Your verification code(otp) is \n" + otp + "\n\n It  will expire in 10 minutes"
+                , "Verify your email."
+        );
+        emailService.sendSimpleMail(mail);
+        return "OTP  has been sent to your email. Please verify.";
+    }
+
 
     @Override
     public String changePassword(String email, ChangePasswordDTO change) {

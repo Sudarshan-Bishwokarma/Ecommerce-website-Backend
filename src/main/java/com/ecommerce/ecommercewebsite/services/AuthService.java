@@ -10,6 +10,8 @@ public interface AuthService {
 
     public String verifyOtp(OtpVerifyDTO request);
 
+    public String resendOtp(ResendOtpDTO request);
+
     public String changePassword(String email, ChangePasswordDTO change);
 
     public String sendForgetPasswordOtp(String email);

@@ -38,6 +38,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
         user.setNumber(request.getNumber());
         Role role = roleRepository.findByRole("ROLE_ADMIN");
         user.setRole(role);
+        user.setVerified(true);
         User savedAdmin = userRepository.save(user);
         System.out.println("Admin Added Successfully");
         // prepare for admin response dto
