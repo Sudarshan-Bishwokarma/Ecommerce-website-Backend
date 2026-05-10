@@ -170,18 +170,18 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public String changePassword(String email, ChangePasswordDTO change) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         //  check   old  password
         if (!passwordEncoder.matches(change.getOldPassword(), user.getPassword())) {
-            throw new PasswordException("Passwords don't match");
+            throw new ApiException(AuthErrorCode.PASSWORD_NOT_MATCH);
         }
         // prevent same  password reuse
         if (passwordEncoder.matches(change.getNewPassword(), user.getPassword())) {
-            throw new PasswordException("New Password  must be different from old  password ");
+            throw new ApiException(AuthErrorCode.NEW_PASSWORD_AND_OLD_PASSWORD_MATCH);
         }
         user.setPassword(passwordEncoder.encode(change.getNewPassword()));
         userRepository.save(user);
-        return "Password has been changed";
+        return "Password has been changed Successfully.";
     }
 
     @Override

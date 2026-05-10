@@ -10,12 +10,20 @@ import org.springframework.stereotype.Component;
 public class CategorySetup {
     @Autowired
     CategoryRepository categoryRepository;
+
     @PostConstruct
-    public void init()
-    {
-        if(categoryRepository.count() == 0) {
-            String[] defaultCategories = {"Shoes", "Laptops", "Accessories", "Electronics"};
-            for(String name : defaultCategories) {
+    public void init() {
+        if (categoryRepository.count() == 0) {
+            String[] defaultCategories = {"Clothing",
+                    "Handicrafts",
+                    "Traditional Foods",
+                    "Paintings",
+                    "Jewelry",
+                    "Souvenirs",
+                    "Wood Crafts",
+                    "Pashmina",
+                    "Decor Items"};
+            for (String name : defaultCategories) {
                 Category category = new Category();
                 category.setCategoryName(name);
                 categoryRepository.save(category);
