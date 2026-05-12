@@ -2,12 +2,16 @@ package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.ProductRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
+import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
+import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.exception.CategoryNotFoundException;
 import com.ecommerce.ecommercewebsite.exception.ImagenNotFoundException;
 import com.ecommerce.ecommercewebsite.exception.ProductNotFoundException;
 import com.ecommerce.ecommercewebsite.model.Category;
+import com.ecommerce.ecommercewebsite.model.District;
 import com.ecommerce.ecommercewebsite.model.Product;
 import com.ecommerce.ecommercewebsite.repositories.CategoryRepository;
+import com.ecommerce.ecommercewebsite.repositories.DistrictRepository;
 import com.ecommerce.ecommercewebsite.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,21 +28,28 @@ public class ProductServiceImpl implements ProductService {
     ProductRepository productRepository;
     @Autowired
     CategoryRepository categoryRepository;
+    @Autowired
+    private DistrictRepository districtRepository;
 
     @Override
     public ProductResponseDTO addProduct(ProductRequestDTO request, MultipartFile file) {
+        District district = districtRepository.findById(request.getDistrictId()).orElseThrow(() -> new ApiException(ProductErrorCode.DISTRICT_NOT_FOUND));
         // fetching category
         Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new CategoryNotFoundException("Category Not Found"));
+                .orElseThrow(() -> new ApiException(ProductErrorCode.CATEGORY_NOT_FOUND));
+        productRepository.findByProductName(request.getProductName()).ifPresent(existingProduct -> {
+            throw new ApiException(ProductErrorCode.PRODUCT_ALREADY_EXIST);
+        });
         Product product = new Product();
         product.setProductName(request.getProductName());
         product.setProductPrice(request.getProductPrice());
         product.setProductDescription(request.getProductDescription());
         product.setCategory(category);
+        product.setDistrict(district);
         try {
             product.setProductImage(file.getBytes());
         } catch (Exception e) {
-            throw new ImagenNotFoundException(" Product Image Not Found");
+            throw new ApiException(ProductErrorCode.IMAGE_NOT_FOUND);
         }
         Product saved = productRepository.save(product);
 
@@ -136,6 +147,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setProductDescription(product.getProductDescription());
         dto.setProductPrice(product.getProductPrice());
         dto.setProductCategory(product.getCategory().getCategoryName());
+        dto.setDistrictName(product.getDistrict().getDistrictName());
         if (product.getProductImage() != null) {
             String base64 = Base64.getEncoder().encodeToString(product.getProductImage());
             dto.setProductImageBase64(base64);

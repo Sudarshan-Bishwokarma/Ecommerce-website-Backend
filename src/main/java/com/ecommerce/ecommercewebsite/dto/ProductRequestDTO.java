@@ -12,4 +12,5 @@ public class ProductRequestDTO {
     private String productDescription;
     private Double productPrice;
     private Long categoryId;
+    private Long districtId;
 }

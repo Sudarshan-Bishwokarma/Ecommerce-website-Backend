@@ -14,4 +14,5 @@ public class ProductResponseDTO {
     private Double productPrice;
     private String productCategory;
     private String productImageBase64;
+    private String districtName;
 }   
