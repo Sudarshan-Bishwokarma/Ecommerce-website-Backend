@@ -1,6 +1,8 @@
 package com.ecommerce.ecommercewebsite.repositories;
 
 import com.ecommerce.ecommercewebsite.model.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -12,5 +14,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     public Optional<Product> findByProductName(String productName);
 
     List<Product> findByProductPriceBetween(Double minPrice, Double maxPrice);
+
+    Page<Product> findByDistrict_Id(Long districtId, Pageable pageable);
 }
 

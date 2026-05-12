@@ -5,7 +5,6 @@ import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.exception.CategoryNotFoundException;
-import com.ecommerce.ecommercewebsite.exception.ImagenNotFoundException;
 import com.ecommerce.ecommercewebsite.exception.ProductNotFoundException;
 import com.ecommerce.ecommercewebsite.model.Category;
 import com.ecommerce.ecommercewebsite.model.District;
@@ -14,6 +13,9 @@ import com.ecommerce.ecommercewebsite.repositories.CategoryRepository;
 import com.ecommerce.ecommercewebsite.repositories.DistrictRepository;
 import com.ecommerce.ecommercewebsite.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -136,6 +138,16 @@ public class ProductServiceImpl implements ProductService {
             dtos.add(dto);
         }
         return dtos;
+    }
+
+    @Override
+    public Page<ProductResponseDTO> getAllProductsByDistrict(Long id, int page, int size) {
+        // check  district  exist or not
+        District district = districtRepository.findById(id).orElseThrow(() -> new ApiException(ProductErrorCode.DISTRICT_NOT_FOUND));
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> products = productRepository.findByDistrict_Id(id, pageable);
+
+        return products.map(this::mapToDTO);
     }
 
 

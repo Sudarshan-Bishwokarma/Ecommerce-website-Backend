@@ -4,6 +4,7 @@ import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,4 +44,15 @@ public class ProductController {
         return ResponseEntity.ok(productsResponse);
     }
 
+    // fetch  products  by  districtId
+    @GetMapping("/products/district/{id}")
+    ResponseEntity<ApiResponse<Page<ProductResponseDTO>>> getAllDistrictProducts(@PathVariable Long id,
+                                                                                 @RequestParam(defaultValue = "0") int page,
+                                                                                 @RequestParam(defaultValue = "10") int size) {
+        Page<ProductResponseDTO> response = productService.getAllProductsByDistrict(id, page, size);
+        ApiResponse<Page<ProductResponseDTO>> apiResponse = new ApiResponse<>("Success", response);
+        return ResponseEntity.ok(apiResponse);
+
+
+    }
 }
