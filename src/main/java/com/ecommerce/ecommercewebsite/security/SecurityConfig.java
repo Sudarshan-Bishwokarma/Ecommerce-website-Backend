@@ -36,12 +36,13 @@ public class SecurityConfig {
                 //  Disable CSRF for APIs
                 .csrf(csrf -> csrf.disable())
 
-                //  ENABLE CORS (you forgot this earlier)
+                //  ENABLE CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 //  Endpoint permissions (unchanged)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/all-districts").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/super-admin/**").hasAuthority("ROLE_SUPER_ADMIN")
                         .requestMatchers("/api/**").authenticated()

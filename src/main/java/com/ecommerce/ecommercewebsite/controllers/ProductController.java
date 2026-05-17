@@ -52,7 +52,5 @@ public class ProductController {
         Page<ProductResponseDTO> response = productService.getAllProductsByDistrict(id, page, size);
         ApiResponse<Page<ProductResponseDTO>> apiResponse = new ApiResponse<>("Success", response);
         return ResponseEntity.ok(apiResponse);
-
-
     }
 }

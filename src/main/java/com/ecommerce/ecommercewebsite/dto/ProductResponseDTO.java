@@ -16,3 +16,4 @@ public class ProductResponseDTO {
     private String productImageBase64;
     private String districtName;
 }   
+    
