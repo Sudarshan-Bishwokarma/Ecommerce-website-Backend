@@ -14,7 +14,8 @@ public class CategorySetup {
     @PostConstruct
     public void init() {
         if (categoryRepository.count() == 0) {
-            String[] defaultCategories = {"Clothing",
+            String[] defaultCategories = {
+                    "Clothing",
                     "Handicrafts",
                     "Traditional Foods",
                     "Paintings",
@@ -22,7 +23,14 @@ public class CategorySetup {
                     "Souvenirs",
                     "Wood Crafts",
                     "Pashmina",
-                    "Decor Items"};
+                    "Decor Items",
+                    "Religious Items",
+                    "Pottery",
+                    "Handmade Bags",
+                    "Local Spices",
+                    "Buddhist Items",
+                    "Traditional Instruments"
+            };
             for (String name : defaultCategories) {
                 Category category = new Category();
                 category.setCategoryName(name);

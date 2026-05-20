@@ -32,7 +32,8 @@ public class JwtFilter extends OncePerRequestFilter {
             "/api/auth/forget-password",
             "/api/auth/reset-password",
             "/api/auth/resend-otp",
-            "/api/all-districts"
+            "/api/all-districts",
+            "/api/all-categories"
     );
 
     @Override
