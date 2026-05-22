@@ -32,7 +32,7 @@ public class AdminProductController {
         ProductResponseDTO updateData = productService.updateProduct(id, update);
         return ResponseEntity.ok().body(updateData);
     }
-
+    
     @DeleteMapping("/delete-product/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
         String status = productService.deleteProduct(id);

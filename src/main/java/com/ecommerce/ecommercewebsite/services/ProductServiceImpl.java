@@ -141,6 +141,30 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public Page<ProductResponseDTO> sortProducts(String sortType, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> allProducts;
+        switch (sortType) {
+            case "priceAsc":
+                allProducts = productRepository.findAllByOrderByProductPriceAsc(pageable);
+                break;
+            case "priceDesc":
+                allProducts = productRepository.findAllByOrderByProductPriceDesc(pageable);
+                break;
+            case "nameAsc":
+                allProducts = productRepository.findAllByOrderByProductNameAsc(pageable);
+                break;
+            case "nameDesc":
+                allProducts = productRepository.findAllByOrderByProductNameDesc(pageable);
+                break;
+            default:
+                allProducts = productRepository.findAll(pageable);
+
+        }
+        return allProducts.map(this::mapToDTO);
+    }
+
+    @Override
     public Page<ProductResponseDTO> getAllProductsByDistrict(Long id, int page, int size) {
         // check  district  exist or not
         District district = districtRepository.findById(id).orElseThrow(() -> new ApiException(ProductErrorCode.DISTRICT_NOT_FOUND));

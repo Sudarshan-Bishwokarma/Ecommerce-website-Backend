@@ -33,7 +33,8 @@ public class JwtFilter extends OncePerRequestFilter {
             "/api/auth/reset-password",
             "/api/auth/resend-otp",
             "/api/all-districts",
-            "/api/all-categories"
+            "/api/all-categories",
+            "/api/sort-products"
     );
 
     @Override

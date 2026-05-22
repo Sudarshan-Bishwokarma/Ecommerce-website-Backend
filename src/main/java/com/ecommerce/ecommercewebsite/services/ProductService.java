@@ -24,6 +24,8 @@ public interface ProductService {
 
     public List<ProductResponseDTO> filterProductsByPrice(Double minPrice, Double maxPrice);
 
+    public Page<ProductResponseDTO> sortProducts(String sortType, int page, int size);
+
     public Page<ProductResponseDTO> getAllProductsByDistrict(Long id, int page, int size);
 
 }
