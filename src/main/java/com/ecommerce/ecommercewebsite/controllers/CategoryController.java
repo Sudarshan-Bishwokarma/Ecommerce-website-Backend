@@ -23,7 +23,7 @@ public class CategoryController {
     @GetMapping("/all-categories")
     public ResponseEntity<ApiResponse<List<Category>>> getAllCategories() {
         List<Category> categories = categoryService.findAll();
-        ApiResponse<List<Category>> response = new ApiResponse<>("District Fetched Successfully", categories);
+        ApiResponse<List<Category>> response = new ApiResponse<>("Categories Fetched Successfully", categories);
         return ResponseEntity.ok(response);
     }
 
