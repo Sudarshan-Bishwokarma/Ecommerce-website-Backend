@@ -24,4 +24,7 @@ public class Product {
     private Category category;
     @ManyToOne
     private District district;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id")
+    private User admin;
 }
