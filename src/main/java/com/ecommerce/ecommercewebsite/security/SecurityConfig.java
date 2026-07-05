@@ -28,6 +28,8 @@ public class SecurityConfig {
 
     @Autowired
     private JwtFilter jwtFilter;
+    @Autowired
+    OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -46,12 +48,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/all-districts").permitAll()
                         .requestMatchers("/api/all-categories").permitAll()
                         .requestMatchers("/api/sort-products/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/api/vendor/**").hasAuthority("ROLE_VENDOR")
                         .requestMatchers("/api/super-admin/**").hasAuthority("ROLE_SUPER_ADMIN")
 
                         .anyRequest().authenticated()
                 )
-
+                .oauth2Login(oauth -> oauth
+                        .successHandler(oAuth2SuccessHandler)
+                )
                 //  Stateless session (unchanged)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

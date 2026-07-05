@@ -1,15 +1,21 @@
 package com.ecommerce.ecommercewebsite.services;
 
-import com.ecommerce.ecommercewebsite.dto.AdminRequestDTO;
-import com.ecommerce.ecommercewebsite.dto.AdminResponseDTO;
-import com.ecommerce.ecommercewebsite.exception.EmailAlreadyExistsException;
+import com.ecommerce.ecommercewebsite.dto.VendorResponseDTO;
+import com.ecommerce.ecommercewebsite.enums.ApprovalStatus;
+import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
+import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.exception.UserNotFoundException;
+import com.ecommerce.ecommercewebsite.mappers.VendorMapper;
+import com.ecommerce.ecommercewebsite.model.BusinessProfile;
 import com.ecommerce.ecommercewebsite.model.Role;
 import com.ecommerce.ecommercewebsite.model.User;
+import com.ecommerce.ecommercewebsite.repositories.BusinessProfileRepository;
 import com.ecommerce.ecommercewebsite.repositories.RoleRepository;
 import com.ecommerce.ecommercewebsite.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,75 +28,50 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     UserRepository userRepository;
     @Autowired
     RoleRepository roleRepository;
+
     @Autowired
-    PasswordEncoder passwordEncoder;
+    private BusinessProfileRepository businessProfileRepository;
+    @Autowired
+    private VendorMapper vendorMapper;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
 
     @Override
-    public AdminResponseDTO addAdmin(AdminRequestDTO request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new EmailAlreadyExistsException("Email Already Exists");
-        }
-        User user = new User();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setCity(request.getCity());
-        user.setNumber(request.getNumber());
-        Role role = roleRepository.findByRole("ROLE_ADMIN");
-        user.setRole(role);
-        user.setVerified(true);
-        User savedAdmin = userRepository.save(user);
-        System.out.println("Admin Added Successfully");
-        // prepare for admin response dto
-
-        AdminResponseDTO adminResponseDTO = mapToDTO(savedAdmin);
-        return adminResponseDTO;
-    }
-
-    @Override
-    public AdminResponseDTO updateAdmin(AdminRequestDTO request, Long id) {
-        User admin = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        admin.setName(request.getName());
-        admin.setEmail(request.getEmail());
-        admin.setCity(request.getCity());
-        admin.setNumber(request.getNumber());
-        User savedAdmin = userRepository.save(admin);
-        System.out.println("Admin Updated Successfully");
-        AdminResponseDTO adminResponseDTO = mapToDTO(savedAdmin);
-        return adminResponseDTO;
-
-    }
-
-    @Override
-    public String deleteAdmin(Long id) {
+    public String deleteVendor(Long id) {
         userRepository.deleteById(id);
         return "Admin Deleted Successfully";
     }
 
     @Override
-    public List<AdminResponseDTO> getAllAdmins() {
-        Role adminRole = roleRepository.findByRole("ROLE_ADMIN");
-        List<User> allAdmins = userRepository.findAllByRole(adminRole);
-        if (allAdmins.isEmpty()) {
-            throw new UserNotFoundException("Admins not found");
+    public Page<VendorResponseDTO> getAllVendors(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Role role = roleRepository.findByRole("ROLE_VENDOR");
+        Page<BusinessProfile> businessProfilePage = businessProfileRepository.findAll(pageable);
+        return businessProfilePage.map(vendorMapper::map);
+    }
+
+    @Override
+    public String approveVendor(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
+        if (!user.isVerified()) {
+            throw new ApiException(AuthErrorCode.NOT_VERIFIED);
         }
-        List<AdminResponseDTO> adminResponseDTO = new ArrayList<>();
-        for (User user : allAdmins) {
-            AdminResponseDTO response = mapToDTO(user);
-            adminResponseDTO.add(response);
+        BusinessProfile businessProfile = businessProfileRepository.findByUser(user).orElseThrow(() -> new ApiException(AuthErrorCode.BUSINESS_PROFILE_NOT_FOUND));
+        if (businessProfile.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            businessProfile.setApprovalStatus(ApprovalStatus.APPROVED);
+            businessProfileRepository.save(businessProfile);
         }
-        return adminResponseDTO;
+        return " Approved Successfully";
+    }
+
+    @Override
+    public Page<VendorResponseDTO> getAllPendingVendors(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BusinessProfile> profiles = businessProfileRepository.findByApprovalStatus(ApprovalStatus.PENDING, pageable);
+        return profiles.map(vendorMapper::map);
 
     }
 
-    //  helper class
-    private AdminResponseDTO mapToDTO(User user) {
-        AdminResponseDTO responseDTO = new AdminResponseDTO();
-        responseDTO.setId(user.getId());
-        responseDTO.setName(user.getName());
-        responseDTO.setEmail(user.getEmail());
-        responseDTO.setCity(user.getCity());
-        responseDTO.setNumber(user.getNumber());
-        return responseDTO;
-    }
+
 }

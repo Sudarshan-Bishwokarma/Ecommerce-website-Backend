@@ -12,6 +12,8 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -30,10 +32,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         JwtResponseDto jwtResponse = oAuth2UserService.processGoogleLogin(oAuth2User);
 
-        response.setContentType("application/json");
-        response.getWriter().write("{\"token\":\"" + jwtResponse.getToken() +
-                "\",\"email\":\"" + jwtResponse.getEmail() + "\"}");
 
+        String redirectUrl =
+                "http://localhost:5173/oauth-success" +
+                        "?token=" + URLEncoder.encode(jwtResponse.getToken(), StandardCharsets.UTF_8) +
+                        "&role=" + URLEncoder.encode(jwtResponse.getRole(), StandardCharsets.UTF_8) +
+                        "&email=" + URLEncoder.encode(jwtResponse.getEmail(), StandardCharsets.UTF_8);
+
+        response.sendRedirect(redirectUrl);
         clearAuthenticationAttributes(request);
     }
 }

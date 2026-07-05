@@ -1,5 +1,6 @@
 package com.ecommerce.ecommercewebsite.dto;
 
+import com.ecommerce.ecommercewebsite.enums.RoleType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,5 @@ public class RegisterRequestDTO {
     private String name;
     private String email;
     private String password;
-    private String city;
-    private String number;
+    private RoleType roleType;
 }

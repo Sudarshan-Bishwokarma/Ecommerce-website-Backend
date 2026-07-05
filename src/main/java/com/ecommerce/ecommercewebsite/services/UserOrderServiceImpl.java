@@ -2,11 +2,9 @@ package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.OrderRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;
+import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
-import com.ecommerce.ecommercewebsite.exception.CartItemNotFoundException;
-import com.ecommerce.ecommercewebsite.exception.CartNotFoundException;
-import com.ecommerce.ecommercewebsite.exception.OrderNotFoundException;
-import com.ecommerce.ecommercewebsite.exception.UserNotFoundException;
+import com.ecommerce.ecommercewebsite.exception.*;
 import com.ecommerce.ecommercewebsite.model.*;
 import com.ecommerce.ecommercewebsite.repositories.CartRepository;
 import com.ecommerce.ecommercewebsite.repositories.OrderRepository;
@@ -37,7 +35,7 @@ public class UserOrderServiceImpl implements UserOrderService {
     @Override
     public OrderResponseDTO placeOrder(String email, OrderRequestDTO orderRequestDTO) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
 
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() -> new CartNotFoundException("Cart not found"));
@@ -56,10 +54,9 @@ public class UserOrderServiceImpl implements UserOrderService {
         for (CartItem cartItem : cart.getItems()) {
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
-            orderItem.setProduct(cartItem.getProduct());
             orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPriceAtPurchase(cartItem.getProduct().getProductPrice());
-            double subTotal = cartItem.getProduct().getProductPrice() * cartItem.getQuantity();
+            orderItem.setPriceAtPurchase(cartItem.getTotalPrice());
+            double subTotal = cartItem.getProductVariant().getPrice() * cartItem.getQuantity();
             total_Amount += subTotal;
             orderItems.add(orderItem);
         }

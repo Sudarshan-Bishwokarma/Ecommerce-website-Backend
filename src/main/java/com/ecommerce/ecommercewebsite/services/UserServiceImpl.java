@@ -3,17 +3,15 @@ package com.ecommerce.ecommercewebsite.services;
 import com.ecommerce.ecommercewebsite.dto.AddToCartRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.AddToCartResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.UpdateCartRequestDTO;
+import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
+import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
+import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.exception.CartNotFoundException;
 import com.ecommerce.ecommercewebsite.exception.ProductNotFoundException;
 import com.ecommerce.ecommercewebsite.exception.UserNotFoundException;
-import com.ecommerce.ecommercewebsite.model.Cart;
-import com.ecommerce.ecommercewebsite.model.CartItem;
-import com.ecommerce.ecommercewebsite.model.Product;
-import com.ecommerce.ecommercewebsite.model.User;
-import com.ecommerce.ecommercewebsite.repositories.CartItemRepository;
-import com.ecommerce.ecommercewebsite.repositories.CartRepository;
-import com.ecommerce.ecommercewebsite.repositories.ProductRepository;
-import com.ecommerce.ecommercewebsite.repositories.UserRepository;
+import com.ecommerce.ecommercewebsite.mappers.AddToCartMapper;
+import com.ecommerce.ecommercewebsite.model.*;
+import com.ecommerce.ecommercewebsite.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,11 +32,15 @@ public class UserServiceImpl implements UserService {
     private ProductRepository productRepository;
     @Autowired
     private CartItemRepository cartItemRepository;
+    @Autowired
+    ProductVariantsRepository productVariantsRepository;
+    @Autowired
+    AddToCartMapper addToCartMapper;
 
     @Override
     public AddToCartResponseDTO addToCart(String email, AddToCartRequestDTO addToCartRequestDTO) {
         User user = userRepository.findByEmail(email).
-                orElseThrow(() -> new UserNotFoundException("User not found"));
+                orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         //  get or  create a   cart
         Cart cart = cartRepository.findByUser(user)
                 .orElseGet(() -> {
@@ -49,42 +51,41 @@ public class UserServiceImpl implements UserService {
 
                 );
         //   get    product
-        Product product = productRepository.findById(addToCartRequestDTO.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+        ProductVariants variant = productVariantsRepository.findById(addToCartRequestDTO.getProductVariantId())
+                .orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND));
         //  check if the   product  already exist in the cart
-        CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
-                .orElse(null);
-
-        if (cartItem != null) {
-            cartItem.setQuantity(cartItem.getQuantity() + addToCartRequestDTO.getQuantity());
-            cartItem.setTotalPrice(cartItem.getQuantity() * product.getProductPrice());
-            cartItemRepository.save(cartItem);
+        CartItem cartItem = cartItemRepository.findByCartAndProductVariant(cart, variant).orElse(null);
+        if (cartItem == null) {
+            CartItem newCartItem = new CartItem();
+            newCartItem.setCart(cart);
+            newCartItem.setProductVariant(variant);
+            newCartItem.setQuantity(addToCartRequestDTO.getQuantity());
+            newCartItem.setTotalPrice(addToCartRequestDTO.getQuantity() * variant.getPrice());
+            cartItemRepository.save(newCartItem);
         } else {
-            cartItem = new CartItem();
-            cartItem.setCart(cart);
-            cartItem.setQuantity(addToCartRequestDTO.getQuantity());
-            cartItem.setProduct(product);
-            cartItem.setTotalPrice(addToCartRequestDTO.getQuantity() * product.getProductPrice());
+            cartItem.setQuantity(cartItem.getQuantity() + addToCartRequestDTO.getQuantity());
+            cartItem.setTotalPrice(addToCartRequestDTO.getQuantity() * variant.getPrice());
             cartItemRepository.save(cartItem);
         }
 
-        System.out.println("Product added to cart");
-        AddToCartResponseDTO responseDTO = mapToDTO(cartItem);
+        System.out.println("Products added to cart");
+        AddToCartResponseDTO responseDTO = addToCartMapper.mapToDTO(cartItem);
         return responseDTO;
     }
 
     @Override
     public List<AddToCartResponseDTO> getCart(User user) {
-        Cart cart = cartRepository.findByUser(user)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-        List<CartItem> cartItem = cartItemRepository.findByCart(cart);
-
-        if (cartItem.isEmpty()) {
+        Cart cart = cartRepository.findByUser(user).orElse(null);
+        if (cart == null) {
+            return new ArrayList<>();
+        }
+        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
+        if (cartItems.isEmpty()) {
             return new ArrayList<>();
         }
         List<AddToCartResponseDTO> dtos = new ArrayList<>();
-        for (CartItem item : cartItem) {
-            AddToCartResponseDTO dto = mapToDTO(item);
+        for (CartItem item : cartItems) {
+            AddToCartResponseDTO dto = addToCartMapper.mapToDTO(item);
             dtos.add(dto);
         }
 
@@ -94,9 +95,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public String updateCart(Long CartItemId, String email, UpdateCartRequestDTO updateCartRequestDTO) {
         User user = userRepository.findByEmail(email).
-                orElseThrow(() -> new UserNotFoundException("User not found"));
+                orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         CartItem cartItem = cartItemRepository.findById(CartItemId).
-                orElseThrow(() -> new CartNotFoundException("CartItem not found"));
+                orElseThrow(() -> new ApiException(ProductErrorCode.CART_ITEM_NOT_FOUND));
         // ownership check
         if (cartItem.getCart().getUser().getId() != user.getId()) {
             throw new AccessDeniedException("Access denied");
@@ -108,7 +109,7 @@ public class UserServiceImpl implements UserService {
             cartItem.setQuantity(updateCartRequestDTO.getQuantity());
             cartItem.setTotalPrice(cartItem.getTotalPrice() * updateCartRequestDTO.getQuantity());
             cartItemRepository.save(cartItem);
-            return "CertItem Successfully Updated";
+            return "CartItem Successfully Updated";
         }
 
     }
@@ -116,7 +117,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public String removeCartItem(Long cartItemId, Principal principal) {
         User user = userRepository.findByEmail(principal.getName()).
-                orElseThrow(() -> new UserNotFoundException("User not found"));
+                orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         CartItem cartItem = cartItemRepository.findById(cartItemId).
                 orElseThrow(() -> new CartNotFoundException("CartItem not found"));
         // check   cart ownership
@@ -132,7 +133,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public String clearAllCartItems(Long cartId, Principal principal) {
         User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() -> new CartNotFoundException("Cart not found"));
         // check  ownerShip
@@ -146,25 +147,6 @@ public class UserServiceImpl implements UserService {
         return "Cart Item Deleted Successfully";
     }
 
-    // helper class
-    private AddToCartResponseDTO mapToDTO(CartItem cartItem) {
-        AddToCartResponseDTO responseDTO = new AddToCartResponseDTO();
-        responseDTO.setCartItemId(cartItem.getId());
-        responseDTO.setProductId(cartItem.getProduct().getProductId());
-        responseDTO.setProductName(cartItem.getProduct().getProductName());
-        responseDTO.setProductPrice(cartItem.getProduct().getProductPrice());
-        responseDTO.setTotalPrice(cartItem.getTotalPrice());
-        responseDTO.setQuantity(cartItem.getQuantity());
-        return responseDTO;
-    }
 
 }
 
-/*
-Even if a user is logged in, we still check the database because login only tells us who the user is, not
- the user still exists or is allowed to do actions. The database check makes sure the user is valid before doing business work like adding items to the cart.
- */
-/*
-gged-in user adds a product, we find the user and their cart, update the product quantity if it’s already there,
- or add it as a new item, then save.
- */

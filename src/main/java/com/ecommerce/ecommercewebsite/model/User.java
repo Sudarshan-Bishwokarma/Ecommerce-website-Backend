@@ -28,17 +28,13 @@ public class User {
     private String email;
     @Size(min = 6)
     private String password;
-    private String city;
-    private String number;
-    @Lob //@Lob tells JPA to store large data
-    @Column(columnDefinition = "LONGBLOB")
-    private byte[] profile;
-    private String otp;
-    private boolean isVerified = false; // indicates whether OTP verification is done
-    private LocalDateTime otpExpiry; // optional, OTP expires after X minutes
 
+    private String otp;
+    private LocalDateTime otpExpiry;
+    private boolean isVerified = false;
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
-
+    @OneToOne
+    private Profile profile;
 }

@@ -1,9 +1,9 @@
 package com.ecommerce.ecommercewebsite.repositories;
 
-import com.ecommerce.ecommercewebsite.dto.AdminRequestDTO;
-import com.ecommerce.ecommercewebsite.dto.AdminResponseDTO;
 import com.ecommerce.ecommercewebsite.model.Role;
 import com.ecommerce.ecommercewebsite.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     public boolean existsByEmail(String email);
 
-    public List<User> findAllByRole(Role role);
+    public Page<User> findAllByRole(Role role, Pageable pageable);
 
 
 }

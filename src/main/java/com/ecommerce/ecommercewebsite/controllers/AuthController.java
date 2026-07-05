@@ -1,6 +1,7 @@
 package com.ecommerce.ecommercewebsite.controllers;
 
 import com.ecommerce.ecommercewebsite.dto.*;
+import com.ecommerce.ecommercewebsite.enums.RoleType;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,17 +28,16 @@ public class AuthController {
         return ResponseEntity.ok(apiResponse);
     }
 
-    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<String>> register(@RequestPart("data") String data, @RequestPart("file") MultipartFile profile) throws IOException {
-        // Convert JSON string to DTO
-        RegisterRequestDTO request = new ObjectMapper().readValue(data, RegisterRequestDTO.class);
+    @PostMapping(value = "/register")
+    public ResponseEntity<ApiResponse<String>> register(@RequestBody RegisterRequestDTO request) {
+        RoleType role = request.getRoleType();
         System.out.println("Username:" + request.getName());
-        System.out.println("File Name:" + profile.getOriginalFilename());
-        String result = authService.registerUser(request, profile);
-        ApiResponse<String> response = new ApiResponse<>(result, "null");
+        String result = authService.register(request, role);
+        ApiResponse<String> response = new ApiResponse<>("Success", result);
         return ResponseEntity.ok(response);
 
     }
+
 
     @PostMapping("/verify-otp")
     public ResponseEntity<ApiResponse<String>> verifyOtp(@RequestBody OtpVerifyDTO request) {

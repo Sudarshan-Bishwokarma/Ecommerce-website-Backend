@@ -1,12 +1,13 @@
 package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.*;
+import com.ecommerce.ecommercewebsite.enums.RoleType;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface AuthService {
     public JwtResponseDto loginUser(LoginRequestDTO request);
 
-    public String registerUser(RegisterRequestDTO request, MultipartFile profile);
+    public String register(RegisterRequestDTO request, RoleType role);
 
     public String verifyOtp(OtpVerifyDTO request);
 

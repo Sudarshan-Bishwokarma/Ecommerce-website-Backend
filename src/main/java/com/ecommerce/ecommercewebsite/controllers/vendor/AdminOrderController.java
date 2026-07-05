@@ -1,4 +1,4 @@
-package com.ecommerce.ecommercewebsite.controllers.admin;
+package com.ecommerce.ecommercewebsite.controllers.vendor;
 
 import com.ecommerce.ecommercewebsite.dto.*;
 import com.ecommerce.ecommercewebsite.repositories.OrderRepository;
@@ -7,8 +7,6 @@ import com.ecommerce.ecommercewebsite.services.AdminOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;

@@ -1,10 +1,17 @@
 package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.*;
+import com.ecommerce.ecommercewebsite.enums.ApprovalStatus;
 import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
+import com.ecommerce.ecommercewebsite.enums.ProfileStatus;
+import com.ecommerce.ecommercewebsite.enums.RoleType;
 import com.ecommerce.ecommercewebsite.exception.*;
+import com.ecommerce.ecommercewebsite.model.BusinessProfile;
+import com.ecommerce.ecommercewebsite.model.Profile;
 import com.ecommerce.ecommercewebsite.model.Role;
 import com.ecommerce.ecommercewebsite.model.User;
+import com.ecommerce.ecommercewebsite.repositories.BusinessProfileRepository;
+import com.ecommerce.ecommercewebsite.repositories.ProfileRepository;
 import com.ecommerce.ecommercewebsite.repositories.RoleRepository;
 import com.ecommerce.ecommercewebsite.repositories.UserRepository;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
@@ -41,6 +48,10 @@ public class AuthServiceImpl implements AuthService {
     PasswordEncoder passwordEncoder;
     @Autowired
     EmailService emailService;
+    @Autowired
+    BusinessProfileRepository businessProfileRepository;
+    @Autowired
+    private ProfileRepository profileRepository;
 
 
     @Override
@@ -49,11 +60,21 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException(AuthErrorCode.INVALID_CREDENTIALS));
         String role = user.getRole().getRole();
-        // check verified
-        if (role.equals("ROLE_USER") && !user.isVerified()) {
+        Profile profile = profileRepository.findByUser(user).orElse(null);
+        ProfileStatus status;
+        if (profile == null) {
+            status = ProfileStatus.PENDING;
+
+        } else {
+            status = profile.getProfileStatus();
+        }
+
+
+        if (!user.isVerified()) {
             throw new ApiException(AuthErrorCode.NOT_VERIFIED);
 
         }
+
         try {
             // authenticate  the  user
             Authentication authentication = authenticationManager.authenticate(
@@ -63,21 +84,22 @@ public class AuthServiceImpl implements AuthService {
             throw new ApiException(AuthErrorCode.INVALID_CREDENTIALS);
         }
         String token = jwtUtil.generateToken(request.getEmail(), role);
-        return new JwtResponseDto(request.getEmail(), token, role);
+        return new JwtResponseDto(request.getEmail(), token, role, status);
 
     }
 
     @Override
-    public String registerUser(@Valid RegisterRequestDTO request, MultipartFile profile) {
+    public String register(@RequestBody RegisterRequestDTO request, RoleType role) {
         //  check if  exist in the database or not
         User existingUser = userRepository.findByEmail(request.getEmail()).orElse(null);
         //  Case 1: User already exists and verified
         if (existingUser != null && existingUser.isVerified()) {
             throw new ApiException(AuthErrorCode.USER_ALREADY_EXISTS);
         }
-        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
         // case  2  :  if  user  exist   but  not  verified
         if (existingUser != null && !existingUser.isVerified()) {
+            SecureRandom random = new SecureRandom();
+            String otp = String.valueOf(random.nextLong());
             existingUser.setOtp(otp);
             existingUser.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
             userRepository.save(existingUser);
@@ -91,23 +113,15 @@ public class AuthServiceImpl implements AuthService {
             return "OTP_RESENT: OTP sent to your email. Please verify.";
         }
 //  case3: new user registration
+        Role getRole = roleRepository.findByRole(role.name());
+        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setCity(request.getCity());
-        user.setNumber(request.getNumber());
-        try {
-            user.setProfile(profile.getBytes());
-        } catch (Exception e) {
-            throw new ImagenNotFoundException("Profile not found");
-        }
-
-        Role role = roleRepository.findByRole("ROLE_USER");
-        user.setRole(role); //You set the Role object in Java, but JPA stores only the role_id in the database.
+        user.setRole(getRole);
         user.setOtp(otp);
         user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
-
         // save to the database
         User savedUser = userRepository.save(user);
         System.out.println("User is Saved in the database");
@@ -138,6 +152,7 @@ public class AuthServiceImpl implements AuthService {
         if (!request.getOtp().equals(user.getOtp())) {
             throw new ApiException(AuthErrorCode.INVALID_OTP);
         }
+
         user.setVerified(true);
         user.setOtp(null);
         user.setOtpExpiry(null);

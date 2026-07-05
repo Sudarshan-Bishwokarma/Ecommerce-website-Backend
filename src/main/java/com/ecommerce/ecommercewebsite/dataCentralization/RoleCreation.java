@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+
 @Component
 public class RoleCreation {
     @Autowired
@@ -18,15 +19,15 @@ public class RoleCreation {
             Role superRole = new Role();
             superRole.setRole("ROLE_SUPER_ADMIN");
 
-            Role adminRole = new Role();
-            adminRole.setRole("ROLE_ADMIN");
+            Role vendorRole = new Role();
+            vendorRole.setRole("ROLE_VENDOR");
 
             Role userRole = new Role();
             userRole.setRole("ROLE_USER");
 
 
             // Save all roles in one call
-            roleRepository.saveAll(Arrays.asList(superRole, adminRole, userRole));
+            roleRepository.saveAll(Arrays.asList(superRole, vendorRole, userRole));
             System.out.println("Default roles inserted successfully!");
         } else {
             System.out.println("Roles already exist in database.");

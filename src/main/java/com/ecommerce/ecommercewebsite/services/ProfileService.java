@@ -1,9 +1,12 @@
 package com.ecommerce.ecommercewebsite.services;
 
+import com.ecommerce.ecommercewebsite.dto.ProductRequestDTO;
+import com.ecommerce.ecommercewebsite.dto.ProfileRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.ProfileResponseDTO;
 
 import java.security.Principal;
 
 public interface ProfileService {
-    public ProfileResponseDTO getProfile(String email);
+
+    public ProfileResponseDTO completeProfile(String email, ProfileRequestDTO profileRequestDTO);
 }

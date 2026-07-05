@@ -1,11 +1,9 @@
-package com.ecommerce.ecommercewebsite.controllers;
+package com.ecommerce.ecommercewebsite.controllers.common;
 
 import com.ecommerce.ecommercewebsite.model.Category;
-import com.ecommerce.ecommercewebsite.repositories.CategoryRepository;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

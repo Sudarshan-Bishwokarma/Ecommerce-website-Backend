@@ -1,4 +1,4 @@
-package com.ecommerce.ecommercewebsite.controllers;
+package com.ecommerce.ecommercewebsite.controllers.common;
 
 import com.ecommerce.ecommercewebsite.model.District;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
