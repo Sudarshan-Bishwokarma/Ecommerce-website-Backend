@@ -41,7 +41,12 @@ public class VendorProductServiceImpl implements VendorProductService {
     private VendorMapper vendorMapper;
 
     @Override
-    public ProductResponseDTO addProduct(String email, ProductRequestDTO request) {
+    public ProductResponseDTO addProduct(
+            String email,
+            ProductRequestDTO request,
+            MultipartFile productImage,
+            List<MultipartFile> variantImages
+    ) {
 
         User vendor = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
@@ -60,8 +65,11 @@ public class VendorProductServiceImpl implements VendorProductService {
         product.setCategory(category);
         product.setDistrict(district);
 
+        // MAIN IMAGE
         try {
-            product.setProductImage(request.getProductImage().getBytes());
+            if (productImage != null) {
+                product.setProductImage(productImage.getBytes());
+            }
         } catch (Exception e) {
             throw new ApiException(ProductErrorCode.PRODUCT_IMAGE_NOT_FOUND);
         }
@@ -70,23 +78,23 @@ public class VendorProductServiceImpl implements VendorProductService {
                 request.getVariants() != null && !request.getVariants().isEmpty();
 
         product.setHasVariants(hasVariants);
-        // CASE 1: SIMPLE PRODUCT
 
+        // SIMPLE PRODUCT
         if (!hasVariants) {
-
             product.setPrice(request.getPrice());
             product.setStock(request.getStock());
         }
 
         Product savedProduct = productRepository.save(product);
 
-
-        // CASE 2: VARIANT PRODUCT
+        // VARIANTS
         if (hasVariants) {
 
             List<ProductVariants> variants = new ArrayList<>();
 
-            for (ProductVariantRequestDTO dto : request.getVariants()) {
+            for (int i = 0; i < request.getVariants().size(); i++) {
+
+                ProductVariantRequestDTO dto = request.getVariants().get(i);
 
                 ProductVariants v = new ProductVariants();
                 v.setProduct(savedProduct);
@@ -95,20 +103,29 @@ public class VendorProductServiceImpl implements VendorProductService {
                 v.setPrice(dto.getPrice());
                 v.setStock(dto.getStock());
 
+                // VARIANT IMAGE
+                if (variantImages != null && i < variantImages.size()) {
+                    try {
+                        v.setImage(variantImages.get(i).getBytes());
+                    } catch (Exception e) {
+                        throw new ApiException(ProductErrorCode.PRODUCT_IMAGE_NOT_FOUND);
+                    }
+                }
+
                 variants.add(v);
             }
 
             productVariantsRepository.saveAll(variants);
-            savedProduct.getProductVariants().addAll(variants);
+            savedProduct.setProductVariants(variants);
         }
 
         return mapper.mapToDTO(savedProduct);
     }
 
     @Override
-    public String updateStatus(Long id, ProductStatus status) {
+    public String updateStatus(Long id, ProductStatusUpdateRequest request) {
         Product product = productRepository.findById(id).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
-        product.setStatus(status);
+        product.setStatus(request.getStatus());
         productRepository.save(product);
         return "Success";
     }

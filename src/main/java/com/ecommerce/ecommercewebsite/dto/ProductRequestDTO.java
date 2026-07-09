@@ -13,11 +13,15 @@ import java.util.List;
 public class ProductRequestDTO {
     private String productName;
     private String productDescription;
+
     private Long categoryId;
     private Long districtId;
+
+    private Double price;   // only for simple product
+    private Integer stock;  // only for simple product
+
     private MultipartFile productImage;
-    private Double price;
-    private Integer stock;
+
     private List<ProductVariantRequestDTO> variants;
 }
 

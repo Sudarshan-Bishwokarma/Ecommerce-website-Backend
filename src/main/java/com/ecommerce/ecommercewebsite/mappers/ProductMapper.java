@@ -1,7 +1,6 @@
 package com.ecommerce.ecommercewebsite.mappers;
 
 import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
-import com.ecommerce.ecommercewebsite.dto.ProfileResponseDTO;
 import com.ecommerce.ecommercewebsite.model.Product;
 import com.ecommerce.ecommercewebsite.model.ProductVariants;
 import org.springframework.stereotype.Component;
@@ -22,23 +21,26 @@ public class ProductMapper {
         dto.setStatus(product.getStatus());
         dto.setProductCategory(product.getCategory().getCategoryName());
         dto.setDistrictName(product.getDistrict().getDistrictName());
+
+        // IMAGE
         if (product.getProductImage() != null) {
             String base64 = Base64.getEncoder()
                     .encodeToString(product.getProductImage());
             dto.setProductImageBase64(base64);
         }
 
+        // VARIANTS
         List<ProductVariants> variants = product.getProductVariants();
 
-
-        // cas 1:  has variants
         if (variants != null && !variants.isEmpty()) {
+
             dto.setHasVariants(true);
 
             double minPrice = Double.MAX_VALUE;
             int totalStock = 0;
 
             for (ProductVariants v : variants) {
+
                 if (v.getPrice() != null && v.getPrice() < minPrice) {
                     minPrice = v.getPrice();
                 }
@@ -50,14 +52,11 @@ public class ProductMapper {
 
             dto.setProductPrice(minPrice);
             dto.setStock(totalStock);
-        }
 
-        //  case 2 : no variants
+        } else {
 
-        else {
             dto.setHasVariants(false);
             dto.setProductPrice(product.getPrice());
-
             dto.setStock(product.getStock());
         }
 

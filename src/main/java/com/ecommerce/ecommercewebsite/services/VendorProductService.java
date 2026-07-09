@@ -3,15 +3,23 @@ package com.ecommerce.ecommercewebsite.services;
 import com.ecommerce.ecommercewebsite.dto.ProductRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.ProductRequestUpdateDTO;
 import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.ProductStatusUpdateRequest;
 import com.ecommerce.ecommercewebsite.enums.ProductStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface VendorProductService {
     // vendor only methods
-    public ProductResponseDTO addProduct(String email, ProductRequestDTO productRequestDTO);
+    public ProductResponseDTO addProduct(
+            String email,
+            ProductRequestDTO productRequestDTO,
+            MultipartFile productImage,
+            List<MultipartFile> variantImages
+    );
 
-    public String updateStatus(Long id, ProductStatus status);
+    public String updateStatus(Long id, ProductStatusUpdateRequest request);
 
     public ProductResponseDTO updateProduct(Long id, ProductRequestUpdateDTO productRequestUpdateDTO);
 

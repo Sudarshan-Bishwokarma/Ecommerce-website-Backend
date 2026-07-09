@@ -1,6 +1,7 @@
 package com.ecommerce.ecommercewebsite.controllers.vendor;
 
 import com.ecommerce.ecommercewebsite.dto.ProductRequestUpdateDTO;
+import com.ecommerce.ecommercewebsite.dto.ProductStatusUpdateRequest;
 import com.ecommerce.ecommercewebsite.enums.ProductStatus;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.dto.ProductRequestDTO;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/vendor")
@@ -28,22 +30,34 @@ public class VendorProductController {
     @Autowired
     private AdminService adminService;
 
-    // add  product
     @PostMapping(value = "/add-product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<ProductResponseDTO>> addProduct(@RequestPart("product") ProductRequestDTO request, @RequestPart("image") MultipartFile file, @AuthenticationPrincipal UserDetails user) {
-        System.out.println("Controller reached");
+    public ResponseEntity<ApiResponse<ProductResponseDTO>> addProduct(
+
+            @RequestPart("product") ProductRequestDTO request,
+
+            @RequestPart("productImage") MultipartFile productImage,
+
+            @RequestPart(value = "variantImages", required = false)
+            List<MultipartFile> variantImages,
+
+            @AuthenticationPrincipal UserDetails user
+    ) {
+
         String email = user.getUsername();
-        request.setProductImage(file);
-        ProductResponseDTO response = productService.addProduct(email, request);
-        ApiResponse<ProductResponseDTO> apiResponse = new ApiResponse<>("Product Added Successfully", response);
-        return ResponseEntity.ok(apiResponse);
+
+        ProductResponseDTO response =
+                productService.addProduct(email, request, productImage, variantImages);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("Product Added Successfully", response)
+        );
     }
 
     // publish product
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<String>> updateStatus(@PathVariable Long id, @RequestParam ProductStatus status) {
-        String response = productService.updateStatus(id, status);
-        ApiResponse<String> apiResponse = new ApiResponse<>("Product Published Successfully", response);
+    @PatchMapping("/{id}/update-status")
+    public ResponseEntity<ApiResponse<String>> updateStatus(@PathVariable Long id, @RequestBody ProductStatusUpdateRequest request) {
+        String response = productService.updateStatus(id, request);
+        ApiResponse<String> apiResponse = new ApiResponse<>("Status Updated Successfully", response);
         return ResponseEntity.ok(apiResponse);
     }
 

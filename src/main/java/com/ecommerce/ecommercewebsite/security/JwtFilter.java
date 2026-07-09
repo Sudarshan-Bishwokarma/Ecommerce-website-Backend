@@ -24,91 +24,93 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private MyUserDetailsService userDetailsService;
 
-    // List of public endpoints that do NOT require JWT
+    // PUBLIC endpoints (NO JWT REQUIRED)
     private static final List<String> PUBLIC_URLS = List.of(
-            "/api/auth/login",
-            "/api/auth/register",
-            "/api/auth/verify-otp",
-            "/api/auth/forget-password",
-            "/api/auth/reset-password",
-            "/api/auth/resend-otp",
+            "/api/auth/",
             "/api/all-districts",
             "/api/all-categories",
             "/api/sort-products/",
-            "/api/products/district/",
-            "/api/all-products/",
             "/api/product/",
+            "/api/products/",
             "/api/all-products"
     );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
-        String path = request.getRequestURI();
-        System.out.println("Requested path: " + path);
+        String method = request.getMethod();
 
-        // Skip JWT validation for public endpoints
-        if (PUBLIC_URLS.stream().anyMatch(path::startsWith)) {
+        // ✅ 1. ALWAYS allow preflight requests (VERY IMPORTANT)
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            response.setStatus(HttpServletResponse.SC_OK);
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Extract JWT from Authorization header
-        String authHeader = request.getHeader("Authorization");
-        String token = null;
-        String username = null;
+        String path = request.getRequestURI();
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7); // Remove "Bearer " prefix
-            try {
-                username = jwtUtil.extractUsername(token);
-            } catch (Exception e) {
-                // Invalid token
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid JWT token");
-                return;
-            }
-        } else {
-            // Missing or malformed Authorization header
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Authorization header missing or invalid");
+        // ✅ 2. Skip JWT for public APIs
+        if (isPublic(path)) {
+            filterChain.doFilter(request, response);
             return;
         }
 
-        // Validate token and set authentication
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        // ✅ 3. Get Authorization header
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            // Let Spring Security handle missing token
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String token = authHeader.substring(7);
+        String username;
+
+        try {
+            username = jwtUtil.extractUsername(token);
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Invalid token\"}");
+            return;
+        }
+
+        // ✅ 4. Set authentication if not already set
+        if (username != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
 
             if (jwtUtil.isTokenExpired(token)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("JWT token expired");
+                response.getWriter().write("{\"error\":\"Token expired\"}");
                 return;
             }
 
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities()
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
                     );
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            authToken.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
 
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 
+        // ✅ 5. Continue request
         filterChain.doFilter(request, response);
     }
+
+    // Helper method
+    private boolean isPublic(String path) {
+        return PUBLIC_URLS.stream().anyMatch(path::startsWith);
+    }
 }
-/*
-Login → Get JWT
-
-User sends request with JWT
-
-JwtFilter reads role from token
-
-Spring Security compares role with rules
-
-If matches → Controller runs
-
-If not → 403 Forbidden
-*/

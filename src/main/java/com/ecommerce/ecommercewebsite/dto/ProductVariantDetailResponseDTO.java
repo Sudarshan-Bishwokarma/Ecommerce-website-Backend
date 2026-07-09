@@ -9,4 +9,6 @@ public class ProductVariantDetailResponseDTO {
     private String color;
     private Double price;
     private Integer stock;
+    private String variantImageBase64;
 }
+    

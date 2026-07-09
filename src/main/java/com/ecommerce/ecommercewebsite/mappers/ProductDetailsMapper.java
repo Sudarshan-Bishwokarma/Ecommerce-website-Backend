@@ -28,7 +28,6 @@ public class ProductDetailsMapper {
         List<ProductVariants> variants = product.getProductVariants();
         List<ProductVariantDetailResponseDTO> variantsList = new ArrayList<>();
         if (variants != null && !variants.isEmpty()) {
-            dto.setHasVariants(true);
             double min_Price = Double.MAX_VALUE;
             int totalStock = 0;
             for (ProductVariants v : variants) {
@@ -42,16 +41,20 @@ public class ProductDetailsMapper {
 
             for (ProductVariants v : variants) {
                 ProductVariantDetailResponseDTO detail = new ProductVariantDetailResponseDTO();
+                detail.setId(v.getId());
                 detail.setPrice(v.getPrice());
                 detail.setStock(v.getStock());
                 detail.setSize(v.getSize());
                 detail.setColor(v.getColor());
+                if (v.getImage() != null) {
+                    String base64 = Base64.getEncoder().encodeToString(v.getImage());
+                    detail.setVariantImageBase64(base64);
+                }
                 variantsList.add(detail);
             }
             dto.setVariantsDetails(variantsList);
 
         } else {
-            dto.setHasVariants(false);
             dto.setProductPrice(product.getPrice());
             dto.setStock(product.getStock());
         }
