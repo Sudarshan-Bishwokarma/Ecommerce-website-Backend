@@ -22,7 +22,9 @@ public class ProductDetailsMapper {
             String base64 = Base64.getEncoder().encodeToString(product.getProductImage());
             dto.setProductImageBase64(base64);
         }
+        dto.setCategoryId(product.getCategory().getId());
         dto.setCategoryName(product.getCategory().getCategoryName());
+        dto.setDistrictId(product.getDistrict().getId());
         dto.setDistrictName(product.getDistrict().getDistrictName());
         dto.setHasVariants(product.isHasVariants());
         List<ProductVariants> variants = product.getProductVariants();

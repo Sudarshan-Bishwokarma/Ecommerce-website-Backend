@@ -12,7 +12,9 @@ public class ProductDetailResponseDTO {
     private String productDescription;
     private String productImageBase64;
     private ProductStatus status;
+    private Long categoryId;
     private String categoryName;
+    private Long districtId;
     private String districtName;
 
     private Boolean hasVariants;

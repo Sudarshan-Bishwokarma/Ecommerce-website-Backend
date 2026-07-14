@@ -1,11 +1,8 @@
 package com.ecommerce.ecommercewebsite.controllers.vendor;
 
-import com.ecommerce.ecommercewebsite.dto.ProductRequestUpdateDTO;
-import com.ecommerce.ecommercewebsite.dto.ProductStatusUpdateRequest;
+import com.ecommerce.ecommercewebsite.dto.*;
 import com.ecommerce.ecommercewebsite.enums.ProductStatus;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
-import com.ecommerce.ecommercewebsite.dto.ProductRequestDTO;
-import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
 import com.ecommerce.ecommercewebsite.services.VendorProductService;
 import com.ecommerce.ecommercewebsite.services.AdminService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/vendor")
@@ -61,10 +59,18 @@ public class VendorProductController {
         return ResponseEntity.ok(apiResponse);
     }
 
-    @PutMapping("/update-product/{id}")
-    public ResponseEntity<?> updateProduct(@RequestBody ProductRequestUpdateDTO update, @PathVariable Long id) {
-        ProductResponseDTO updateData = productService.updateProduct(id, update);
-        return ResponseEntity.ok().body(updateData);
+    //  update product
+    @PutMapping(value = "/update-product/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ProductResponseDTO>> updateProduct(
+            @RequestPart("product") ProductUpdateRequestDTO request,
+            @PathVariable Long id, @RequestPart(value = "productImage", required = false) MultipartFile productImage,
+            @RequestParam(required = false) Map<String, MultipartFile> variantImages,
+            @AuthenticationPrincipal UserDetails user
+    ) {
+        String email = user.getUsername();
+        ProductResponseDTO responseDTO = productService.updateProduct(id, email, request, productImage, variantImages);
+        ApiResponse<ProductResponseDTO> apiResponse = new ApiResponse<>("Product Updated Successfully", responseDTO);
+        return ResponseEntity.ok().body(apiResponse);
     }
 
     @DeleteMapping("/delete-product/{id}")

@@ -19,9 +19,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class VendorProductServiceImpl implements VendorProductService {
@@ -65,7 +67,7 @@ public class VendorProductServiceImpl implements VendorProductService {
         product.setCategory(category);
         product.setDistrict(district);
 
-        // MAIN IMAGE
+        // main image
         try {
             if (productImage != null) {
                 product.setProductImage(productImage.getBytes());
@@ -87,7 +89,7 @@ public class VendorProductServiceImpl implements VendorProductService {
 
         Product savedProduct = productRepository.save(product);
 
-        // VARIANTS
+        //  if   i has  variant
         if (hasVariants) {
 
             List<ProductVariants> variants = new ArrayList<>();
@@ -131,36 +133,115 @@ public class VendorProductServiceImpl implements VendorProductService {
     }
 
     @Override
-    public ProductResponseDTO updateProduct(Long id, ProductRequestUpdateDTO productRequestUpdateDTO) {
+    public ProductResponseDTO updateProduct(Long id, String email, ProductUpdateRequestDTO request, MultipartFile productImage, Map<String, MultipartFile> variantImages) {
         // check if the   product exist in the database
         Product product = productRepository.findById(id).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
-        product.setProductName(productRequestUpdateDTO.getProductName());
-        product.setProductDescription(productRequestUpdateDTO.getProductDescription());
-        product.setStatus(ProductStatus.DRAFT);
-        Category category = categoryRepository.findById(productRequestUpdateDTO.getCategoryId())
+        product.setProductName(request.getProductName());
+        product.setProductDescription(request.getProductDescription());
+        Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ApiException(ProductErrorCode.CATEGORY_NOT_FOUND));
         product.setCategory(category);
-        District district = districtRepository.findById(productRequestUpdateDTO.getDistrictId()).orElseThrow(() -> new ApiException(ProductErrorCode.DISTRICT_NOT_FOUND));
+        District district = districtRepository.findById(request.getDistrictId()).orElseThrow(() -> new ApiException(ProductErrorCode.DISTRICT_NOT_FOUND));
         product.setDistrict(district);
+        // Verify vendor owns product
+        if (!product.getVendor().getEmail().equals(email)) {
+            throw new ApiException(ProductErrorCode.UNAUTHORIZED_PRODUCT_ACCESS);
+        }
+        if (productImage != null && !productImage.isEmpty()) {
+
+            try {
+
+                product.setProductImage(
+                        productImage.getBytes()
+                );
+
+            } catch (IOException e) {
+
+                throw new ApiException(
+                        ProductErrorCode.PRODUCT_IMAGE_NOT_FOUND
+                );
+
+            }
+        }
+        // simple product
+        if (Boolean.FALSE.equals(request.getHasVariants())) {
+
+            product.setHasVariants(false);
+            product.setPrice(request.getPrice());
+            product.setStock(request.getStock());
+
+        }
+        // if product has  variant
+        if (request.getHasVariants()) {
+            product.setHasVariants(true);
+
+            product.setPrice(null);
+            product.setStock(null);
+            List<ProductVariantUpdateDTO> variantList = request.getVariants();
+            for (ProductVariantUpdateDTO v : variantList) {
+                if (v.getVariantId() != null) {
+                    ProductVariants existingVariant = productVariantsRepository.findById(v.getVariantId()).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND));
+                    existingVariant.setSize(v.getSize());
+                    existingVariant.setColor(v.getColor());
+                    existingVariant.setPrice(v.getPrice());
+                    existingVariant.setStock(v.getStock());
+                    MultipartFile image = variantImages.get("variantImage_" + v.getVariantId());
+                    if (image != null && !image.isEmpty()) {
+                        try {
+                            existingVariant.setImage(image.getBytes());
+                        } catch (IOException e) {
+                            throw new ApiException(ProductErrorCode.PRODUCT_IMAGE_NOT_FOUND);
+                        }
+                    }
+                } else {
+                    ProductVariants newVariant = new ProductVariants();
+                    newVariant.setSize(v.getSize());
+                    newVariant.setColor(v.getColor());
+                    newVariant.setPrice(v.getPrice());
+                    newVariant.setStock(v.getStock());
+                    newVariant.setProduct(product);
+                    MultipartFile image = variantImages.get("newVariantImage_" + variantList.indexOf(v));
+
+
+                    if (image != null && !image.isEmpty()) {
+                        try {
+                            newVariant.setImage(image.getBytes());
+                        } catch (IOException e) {
+                            throw new ApiException(ProductErrorCode.PRODUCT_IMAGE_NOT_FOUND);
+                        }
+                    }
+                    product.getProductVariants().add(newVariant);
+
+                }
+            }
+
+        }
+        //  delete variant
+        if (request.getDeletedVariantIds() != null && !request.getDeletedVariantIds().isEmpty()) {
+            for (Long variantId : request.getDeletedVariantIds()) {
+
+                ProductVariants variant =
+                        productVariantsRepository.findById(variantId)
+                                .orElseThrow(() ->
+                                        new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND)
+                                );
+
+
+                // check variant belongs to this product
+                if (!variant.getProduct().getProductId().equals(id)) {
+
+                    throw new ApiException(
+                            ProductErrorCode.UNAUTHORIZED_PRODUCT_ACCESS
+                    );
+                }
+
+                productVariantsRepository.delete(variant);
+            }
+        }
         Product savedProduct = productRepository.save(product);
 
-        for (ProductVariantUpdateRequestDTO dto : productRequestUpdateDTO.getVariants()) {
-            ProductVariants variant = productVariantsRepository.findById(dto.getVariantId())
-                    .orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND));
-
-            variant.setSize(dto.getSize());
-            variant.setColor(dto.getColor());
-            variant.setPrice(dto.getPrice());
-            variant.setStock(dto.getStock());
-
-            productVariantsRepository.save(variant);
-        }
-        System.out.println("Product Updated Successfully");
-
-        //  prepared for response
-        ProductResponseDTO responseDTO = mapper.mapToDTO(savedProduct);
-
-        return responseDTO;
+        ProductResponseDTO dto = mapper.mapToDTO(savedProduct);
+        return dto;
     }
 
     @Override
