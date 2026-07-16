@@ -25,6 +25,6 @@ public interface VendorProductService {
 
     public Page<ProductResponseDTO> getMyProducts(String email, int page, int size);
 
-    public Page<ProductResponseDTO> getProducts(String email, Long districtId, Long categoryId, String sortType, int page, int size);
+    public Page<ProductResponseDTO> getProducts(String email, Long districtId, Long categoryId, String sortType, String search, int page, int size);
 
 }

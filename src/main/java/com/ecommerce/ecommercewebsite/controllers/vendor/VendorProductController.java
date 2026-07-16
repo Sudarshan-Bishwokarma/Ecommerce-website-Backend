@@ -103,12 +103,13 @@ public class VendorProductController {
             @RequestParam(required = false) Long districtId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String sortType,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
 
     ) {
         String email = userDetails.getUsername();
-        Page<ProductResponseDTO> responseDTOS = productService.getProducts(email, districtId, categoryId, sortType, page, size);
+        Page<ProductResponseDTO> responseDTOS = productService.getProducts(email, districtId, categoryId, sortType, search, page, size);
         ApiResponse<Page<ProductResponseDTO>> apiResponse = new ApiResponse<>("Products fetched Successfully", responseDTOS);
         return ResponseEntity.ok(apiResponse);
     }

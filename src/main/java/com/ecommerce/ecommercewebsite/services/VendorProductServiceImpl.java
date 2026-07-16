@@ -267,7 +267,7 @@ public class VendorProductServiceImpl implements VendorProductService {
 
 
     @Override
-    public Page<ProductResponseDTO> getProducts(String email, Long districtId, Long categoryId, String sortType, int page, int size) {
+    public Page<ProductResponseDTO> getProducts(String email, Long districtId, Long categoryId, String sortType, String search, int page, int size) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         Long vendor_id = user.getId();
         Pageable pageable;
@@ -293,13 +293,20 @@ public class VendorProductServiceImpl implements VendorProductService {
             pageable = PageRequest.of(page, size);
         }
         Page<Product> allProducts;
-        if (districtId != null && categoryId != null) {
-            allProducts = productRepository.findByVendor_IdAndDistrict_IdAndCategory_Id(vendor_id, districtId, categoryId, pageable);
-
+        if (districtId != null && categoryId != null && search != null) {
+            allProducts = productRepository.findByVendor_IdAndDistrict_IdAndCategory_IdAndProductNameContainingIgnoreCase(vendor_id, districtId, categoryId, search, pageable);
+        } else if (districtId != null && categoryId != null) {
+            allProducts = productRepository.findByVendor_IdAndCategory_IdAndDistrict_Id(vendor_id, categoryId, districtId, pageable);
+        } else if (search != null && categoryId != null) {
+            allProducts = productRepository.findByVendor_IdAndCategory_IdAndProductNameContainingIgnoreCase(vendor_id, categoryId, search, pageable);
+        } else if (search != null && districtId != null) {
+            allProducts = productRepository.findByVendor_IdAndDistrict_IdAndProductNameContainingIgnoreCase(vendor_id, districtId, search, pageable);
         } else if (districtId != null) {
             allProducts = productRepository.findByVendor_IdAndDistrict_Id(vendor_id, districtId, pageable);
         } else if (categoryId != null) {
             allProducts = productRepository.findByVendor_IdAndCategory_Id(vendor_id, categoryId, pageable);
+        } else if (search != null) {
+            allProducts = productRepository.findByVendor_IdAndProductNameContainingIgnoreCase(vendor_id, search, pageable);
         } else {
             allProducts = productRepository.findByVendor_Id(vendor_id, pageable);
         }
