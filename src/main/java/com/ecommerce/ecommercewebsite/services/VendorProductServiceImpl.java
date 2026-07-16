@@ -245,9 +245,8 @@ public class VendorProductServiceImpl implements VendorProductService {
     }
 
     @Override
-    public String deleteProduct(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
+    public String deleteProduct(Long id, String email) {
+        Product product = productRepository.findByProductIdAndVendor_Email(id, email).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
         productRepository.delete(product);
         return "Product Deleted Successfully";
     }

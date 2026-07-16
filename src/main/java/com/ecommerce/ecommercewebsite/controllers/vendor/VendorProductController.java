@@ -73,10 +73,13 @@ public class VendorProductController {
         return ResponseEntity.ok().body(apiResponse);
     }
 
+    //  delete   product
     @DeleteMapping("/delete-product/{id}")
-    public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
-        String status = productService.deleteProduct(id);
-        return ResponseEntity.ok().body(status);
+    public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable Long id, @AuthenticationPrincipal UserDetails user) {
+        String email = user.getUsername();
+        String status = productService.deleteProduct(id, email);
+        ApiResponse<String> apiResponse = new ApiResponse<>("Product Deleted Successfully", null);
+        return ResponseEntity.ok().body(apiResponse);
     }
 
     // get my  products

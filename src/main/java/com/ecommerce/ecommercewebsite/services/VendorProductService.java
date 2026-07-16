@@ -21,7 +21,7 @@ public interface VendorProductService {
 
     public ProductResponseDTO updateProduct(Long id, String email, ProductUpdateRequestDTO request, MultipartFile productImage, Map<String, MultipartFile> files);
 
-    public String deleteProduct(Long id);
+    public String deleteProduct(Long id, String email);
 
     public Page<ProductResponseDTO> getMyProducts(String email, int page, int size);
 

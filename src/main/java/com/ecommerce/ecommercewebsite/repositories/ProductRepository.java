@@ -13,6 +13,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByDistrict_id(Long categoryId, Pageable pageable);
 
+    Optional<Product> findByProductIdAndVendor_Email(Long productId, String vendorEmail);
+
     public Optional<Product> findByProductName(String productName);
 
     Optional<Product> findByProductNameIgnoreCaseAndVendor_Id(String productName, long vendorId);
