@@ -3,9 +3,10 @@ package com.ecommerce.ecommercewebsite.mappers;
 import com.ecommerce.ecommercewebsite.dto.ProductDetailResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.ProductVariantDetailResponseDTO;
 import com.ecommerce.ecommercewebsite.model.Product;
-import com.ecommerce.ecommercewebsite.model.ProductVariants;
+import com.ecommerce.ecommercewebsite.model.ProductVariant;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -27,13 +28,13 @@ public class ProductDetailsMapper {
         dto.setDistrictId(product.getDistrict().getId());
         dto.setDistrictName(product.getDistrict().getDistrictName());
         dto.setHasVariants(product.isHasVariants());
-        List<ProductVariants> variants = product.getProductVariants();
+        List<ProductVariant> variants = product.getProductVariants();
         List<ProductVariantDetailResponseDTO> variantsList = new ArrayList<>();
         if (variants != null && !variants.isEmpty()) {
-            double min_Price = Double.MAX_VALUE;
+            BigDecimal min_Price = null;
             int totalStock = 0;
-            for (ProductVariants v : variants) {
-                if (min_Price > v.getPrice()) {
+            for (ProductVariant v : variants) {
+                if (v.getPrice() != null && (min_Price == null || v.getPrice().compareTo(min_Price) < 0)) {
                     min_Price = v.getPrice();
                 }
                 totalStock += v.getStock();
@@ -41,7 +42,7 @@ public class ProductDetailsMapper {
             dto.setProductPrice(min_Price);
             dto.setStock(totalStock);
 
-            for (ProductVariants v : variants) {
+            for (ProductVariant v : variants) {
                 ProductVariantDetailResponseDTO detail = new ProductVariantDetailResponseDTO();
                 detail.setId(v.getId());
                 detail.setPrice(v.getPrice());

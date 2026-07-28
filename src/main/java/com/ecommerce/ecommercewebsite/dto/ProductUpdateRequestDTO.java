@@ -3,6 +3,7 @@ package com.ecommerce.ecommercewebsite.dto;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -17,7 +18,7 @@ public class ProductUpdateRequestDTO {
 
     private Boolean hasVariants;
     //  only for simple products
-    private Double price;
+    private BigDecimal price;
 
     private Integer stock;
     private MultipartFile productImage;

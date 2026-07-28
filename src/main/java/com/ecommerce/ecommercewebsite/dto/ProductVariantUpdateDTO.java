@@ -2,6 +2,8 @@ package com.ecommerce.ecommercewebsite.dto;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 public class ProductVariantUpdateDTO {
     private Long variantId;
@@ -10,7 +12,7 @@ public class ProductVariantUpdateDTO {
 
     private String color;
 
-    private Double price;
+    private BigDecimal price;
 
     private Integer stock;
 

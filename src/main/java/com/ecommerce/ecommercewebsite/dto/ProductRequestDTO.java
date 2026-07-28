@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @AllArgsConstructor
@@ -17,7 +18,7 @@ public class ProductRequestDTO {
     private Long categoryId;
     private Long districtId;
 
-    private Double price;   // only for simple product
+    private BigDecimal price;   // only for simple product
     private Integer stock;  // only for simple product
 
     private MultipartFile productImage;

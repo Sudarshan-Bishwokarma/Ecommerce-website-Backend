@@ -3,6 +3,7 @@ package com.ecommerce.ecommercewebsite.services;
 import com.ecommerce.ecommercewebsite.dto.AddToCartRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.AddToCartResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.UpdateCartRequestDTO;
+import com.ecommerce.ecommercewebsite.dto.UpdateCartResponseDTO;
 import com.ecommerce.ecommercewebsite.model.User;
 
 import java.security.Principal;
@@ -13,7 +14,7 @@ public interface UserService {
 
     public List<AddToCartResponseDTO> getCart(User user);
 
-    public String updateCart(Long cartItemId, String email, UpdateCartRequestDTO updateCartRequestDTO);
+    public UpdateCartResponseDTO updateCart(Long cartItemId, String email, UpdateCartRequestDTO updateCartRequestDTO);
 
     public String removeCartItem(Long cartItemId, Principal principal);
 

@@ -5,6 +5,5 @@ import lombok.Data;
 
 @Data
 public class UpdateOrderStatusDTO {
-    OrderStatus orderStatus;
-
+    private OrderStatus orderStatus;
 }

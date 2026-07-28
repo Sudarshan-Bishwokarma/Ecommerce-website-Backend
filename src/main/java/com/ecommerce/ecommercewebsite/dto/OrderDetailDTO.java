@@ -3,6 +3,7 @@ package com.ecommerce.ecommercewebsite.dto;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,7 +15,7 @@ public class OrderDetailDTO {
     LocalDateTime orderDateTime;
     String paymentMethod;
     OrderStatus orderStatus;
-    Double totalPrice;
+    BigDecimal totalPrice;
     List<OrderItemDTO> orderItems;
 
 }

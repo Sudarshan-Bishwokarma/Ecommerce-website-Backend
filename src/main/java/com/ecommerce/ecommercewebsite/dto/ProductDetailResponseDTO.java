@@ -3,6 +3,7 @@ package com.ecommerce.ecommercewebsite.dto;
 import com.ecommerce.ecommercewebsite.enums.ProductStatus;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -19,7 +20,7 @@ public class ProductDetailResponseDTO {
 
     private Boolean hasVariants;
 
-    private Double productPrice; // base or min price
+    private BigDecimal productPrice; // base or min price
     private Integer stock;
 
     private List<ProductVariantDetailResponseDTO> variantsDetails;

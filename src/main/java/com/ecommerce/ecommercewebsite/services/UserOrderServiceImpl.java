@@ -4,7 +4,9 @@ import com.ecommerce.ecommercewebsite.dto.OrderRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
+import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
 import com.ecommerce.ecommercewebsite.exception.*;
+import com.ecommerce.ecommercewebsite.mappers.UserOrderMapper;
 import com.ecommerce.ecommercewebsite.model.*;
 import com.ecommerce.ecommercewebsite.repositories.CartRepository;
 import com.ecommerce.ecommercewebsite.repositories.OrderRepository;
@@ -17,9 +19,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserOrderServiceImpl implements UserOrderService {
@@ -31,6 +36,8 @@ public class UserOrderServiceImpl implements UserOrderService {
     private ProductRepository productRepository;
     @Autowired
     CartRepository cartRepository;
+    @Autowired
+    UserOrderMapper orderMapper;
 
     @Override
     public OrderResponseDTO placeOrder(String email, OrderRequestDTO orderRequestDTO) {
@@ -38,36 +45,81 @@ public class UserOrderServiceImpl implements UserOrderService {
                 .orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
 
         Cart cart = cartRepository.findByUser(user)
-                .orElseThrow(() -> new CartNotFoundException("Cart not found"));
+                .orElseThrow(() -> new ApiException(ProductErrorCode.CART_NOT_FOUND));
         if (cart.getItems().isEmpty()) {
-            throw new CartItemNotFoundException("Cart Items  not found");
+            throw new ApiException(ProductErrorCode.CART_ITEM_NOT_FOUND);
         }
         Order order = new Order();
-        order.setUser(user);
+        order.setCustomer(user);
         order.setStatus(OrderStatus.PENDING);
         order.setCreatedAt(LocalDateTime.now());
         order.setShippingAddress(orderRequestDTO.getShippingAddress());
         order.setPaymentMethod(orderRequestDTO.getPaymentMethod());
         order.setNotes(orderRequestDTO.getNotes());
-        double total_Amount = 0;
-        List<OrderItem> orderItems = new ArrayList<>();
+        Map<User, List<CartItem>> vendorCartItems = new HashMap<>();
         for (CartItem cartItem : cart.getItems()) {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPriceAtPurchase(cartItem.getTotalPrice());
-            double subTotal = cartItem.getProductVariant().getPrice() * cartItem.getQuantity();
-            total_Amount += subTotal;
-            orderItems.add(orderItem);
+            User getVendor = cartItem.getProduct().getVendor();
+            vendorCartItems.computeIfAbsent(getVendor, k -> new ArrayList<>()).add(cartItem);
+
         }
-        order.setTotalAmount(total_Amount);
-        order.setOrderItems(orderItems);
+        List<VendorOrder> vendorOrders = new ArrayList<>();
+        BigDecimal orderTotalAmount = BigDecimal.ZERO;
+        for (Map.Entry<User, List<CartItem>> entry : vendorCartItems.entrySet()) {
+
+            User vendor = entry.getKey();
+
+            List<CartItem> cartItems = entry.getValue();
+
+            VendorOrder vendorOrder = new VendorOrder();
+
+            vendorOrder.setOrder(order);
+            vendorOrder.setVendor(vendor);
+            vendorOrder.setStatus(OrderStatus.PENDING);
+            List<OrderItem> orderItems = new ArrayList<>();
+            BigDecimal price;
+            BigDecimal vendorTotalAmount = BigDecimal.ZERO;
+            for (CartItem cartItem : cartItems) {
+
+                OrderItem orderItem = new OrderItem();
+
+                orderItem.setVendorOrder(vendorOrder);
+
+                orderItem.setProduct(cartItem.getProduct());
+
+                orderItem.setQuantity(cartItem.getQuantity());
+
+                if (cartItem.getProductVariant() != null) {
+                    price = cartItem.getProductVariant().getPrice();
+                } else {
+                    price = cartItem.getProduct().getPrice();
+                }
+                orderItem.setPriceAtPurchase(price);
+                BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+                vendorTotalAmount = vendorTotalAmount.add(itemTotal);
+                orderItems.add(orderItem);
+
+            }
+            vendorOrder.setOrderItems(orderItems);
+            vendorOrder.setTotalAmount(vendorTotalAmount);
+            BigDecimal commissionRate = new BigDecimal("0.10");
+            BigDecimal commissionAmount = vendorTotalAmount.multiply(commissionRate);
+            BigDecimal vendorEarning = vendorTotalAmount.subtract(commissionAmount);
+            vendorOrder.setCommissionAmount(commissionAmount);
+            vendorOrder.setVendorEarning(vendorEarning);
+            vendorOrders.add(vendorOrder);
+            orderTotalAmount = orderTotalAmount.add(vendorTotalAmount);
+
+        }
+
+        order.setTotalAmount(orderTotalAmount);
+        order.setVendorOrders(vendorOrders);
         Order savedOrder = orderRepository.save(order);
-        // clear  cart after order   placed
         cart.getItems().clear();
         cartRepository.save(cart);
-        OrderResponseDTO responseDTO = mapDTO(savedOrder);
-        return responseDTO;
+        OrderResponseDTO orderResponseDTO = orderMapper.mapToDTO(savedOrder);
+        return orderResponseDTO;
+
+
     }
 
     @Override
@@ -75,15 +127,15 @@ public class UserOrderServiceImpl implements UserOrderService {
         User user = userRepository.findByEmail(email).
                 orElseThrow(() -> new UserNotFoundException("User not found"));
         Pageable pageable = PageRequest.of(page, size);
-        Page<Order> orderPage = orderRepository.findByUser(user, pageable);
-        return orderPage.map(this::mapDTO);
+        Page<Order> orderPage = orderRepository.findByCustomer(user, pageable);
+        return orderPage.map(orderMapper::mapToDTO);
     }
 
     @Override
     public String cancelOrder(Long id, String email) {
         Order order = orderRepository.findById(id).
                 orElseThrow(() -> new OrderNotFoundException("Order Not found"));
-        if (!order.getUser().getEmail().equals(email)) {
+        if (!order.getCustomer().getEmail().equals(email)) {
             throw new AccessDeniedException("Access Denied");
         }
         order.setStatus(OrderStatus.CANCELED);
@@ -98,19 +150,12 @@ public class UserOrderServiceImpl implements UserOrderService {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order Not found"));
-        if (!order.getUser().getEmail().equals(email)) {
+        if (!order.getCustomer().getEmail().equals(email)) {
             throw new AccessDeniedException("Access Denied");
         }
-        OrderResponseDTO responseDTO = mapDTO(order);
+        OrderResponseDTO responseDTO = orderMapper.mapToDTO(order);
         return responseDTO;
     }
 
-    //  helper class
-    public OrderResponseDTO mapDTO(Order savedOrder) {
-        OrderResponseDTO responseDTO = new OrderResponseDTO();
-        responseDTO.setOrderId(savedOrder.getId());
-        responseDTO.setTotalPrice(savedOrder.getTotalAmount());
-        responseDTO.setOrderStatus(savedOrder.getStatus().name());
-        return responseDTO;
-    }
+
 }

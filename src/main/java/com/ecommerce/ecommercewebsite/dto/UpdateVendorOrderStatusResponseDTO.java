@@ -6,10 +6,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class UpdateOrderStatusResponseDTO {
-    Long orderId;
-    OrderStatus orderStatus;
-    String message;
-    LocalDateTime updateTime;
+public class UpdateVendorOrderStatusResponseDTO {
+    private Long vendorOrderId;
+
+    private OrderStatus status;
+
+    private LocalDateTime updatedAt;
 
 }

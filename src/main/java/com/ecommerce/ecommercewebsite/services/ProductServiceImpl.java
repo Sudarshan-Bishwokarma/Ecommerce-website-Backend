@@ -8,7 +8,7 @@ import com.ecommerce.ecommercewebsite.mappers.ProductDetailsMapper;
 import com.ecommerce.ecommercewebsite.mappers.ProductMapper;
 import com.ecommerce.ecommercewebsite.model.District;
 import com.ecommerce.ecommercewebsite.model.Product;
-import com.ecommerce.ecommercewebsite.model.ProductVariants;
+import com.ecommerce.ecommercewebsite.model.ProductVariant;
 import com.ecommerce.ecommercewebsite.repositories.CategoryRepository;
 import com.ecommerce.ecommercewebsite.repositories.DistrictRepository;
 import com.ecommerce.ecommercewebsite.repositories.ProductRepository;
@@ -75,12 +75,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductResponseDTO> filterProductsByPrice(Double minPrice, Double maxPrice) {
-        List<ProductVariants> allProducts = productVariantsRepository.findByPriceBetween(minPrice, maxPrice);
+        List<ProductVariant> allProducts = productVariantsRepository.findByPriceBetween(minPrice, maxPrice);
         if (allProducts.isEmpty()) {
             return new ArrayList<>();
         }
         List<ProductResponseDTO> dtos = new ArrayList<>();
-        for (ProductVariants variant : allProducts) {
+        for (ProductVariant variant : allProducts) {
             ProductResponseDTO responseDTO = mapper.mapToDTO(variant.getProduct());
         }
         return dtos;

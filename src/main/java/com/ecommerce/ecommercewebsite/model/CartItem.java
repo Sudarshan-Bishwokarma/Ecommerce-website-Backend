@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -16,10 +18,15 @@ public class CartItem {
     @ManyToOne
     @JoinColumn(name = "cart_id")
     private Cart cart;
+    //  // for  both variant and non-variant products
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+    //   // Only used when product has variants
     @ManyToOne
     @JoinColumn(name = "product_variant_id")
-    private ProductVariants productVariant;
+    private ProductVariant productVariant;
     private int quantity;
-    private double totalPrice;
+    private BigDecimal totalPrice;
 
 }

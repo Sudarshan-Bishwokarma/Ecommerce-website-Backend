@@ -2,9 +2,10 @@ package com.ecommerce.ecommercewebsite.mappers;
 
 import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
 import com.ecommerce.ecommercewebsite.model.Product;
-import com.ecommerce.ecommercewebsite.model.ProductVariants;
+import com.ecommerce.ecommercewebsite.model.ProductVariant;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Base64;
 import java.util.List;
 
@@ -19,29 +20,34 @@ public class ProductMapper {
         dto.setProductName(product.getProductName());
         dto.setProductDescription(product.getProductDescription());
         dto.setStatus(product.getStatus());
-        dto.setProductCategory(product.getCategory().getCategoryName());
-        dto.setDistrictName(product.getDistrict().getDistrictName());
+        if (product.getCategory() != null) {
+            dto.setProductCategory(product.getCategory().getCategoryName());
+        }
 
-        // IMAGE
+        if (product.getDistrict() != null) {
+            dto.setDistrictName(product.getDistrict().getDistrictName());
+        }
+
+        // image
         if (product.getProductImage() != null) {
             String base64 = Base64.getEncoder()
                     .encodeToString(product.getProductImage());
             dto.setProductImageBase64(base64);
         }
 
-        // VARIANTS
-        List<ProductVariants> variants = product.getProductVariants();
+        // variants
+        List<ProductVariant> variants = product.getProductVariants();
 
         if (variants != null && !variants.isEmpty()) {
 
             dto.setHasVariants(true);
 
-            double minPrice = Double.MAX_VALUE;
+            BigDecimal minPrice = null;
             int totalStock = 0;
 
-            for (ProductVariants v : variants) {
+            for (ProductVariant v : variants) {
 
-                if (v.getPrice() != null && v.getPrice() < minPrice) {
+                if (v.getPrice() != null && (minPrice == null || v.getPrice().compareTo(minPrice) < 0)) {
                     minPrice = v.getPrice();
                 }
 

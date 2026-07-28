@@ -5,22 +5,16 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class AddToCartResponseDTO {
+public class UpdateCartResponseDTO {
     private Long cartItemId;
-
-    private Long productVariantId;
 
     private Long productId;
 
+    private Long productVariantId;
+
     private String productName;
 
-    private String size;
-
-    private String color;
-
-    private BigDecimal productPrice;
-
     private Integer quantity;
-
+    
     private BigDecimal totalPrice;
 }

@@ -5,11 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class ProductVariants {
+public class ProductVariant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,7 +20,7 @@ public class ProductVariants {
     private String size;
     private String color;
     private Integer stock;
-    private Double price;
+    private BigDecimal price;
 
     @Lob
     private byte[] image;

@@ -5,8 +5,13 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class OrderItemDTO {
+public class OrderItemResponseDTO {
+
+    private Long productId;
+
     private String productName;
+
     private Integer quantity;
-    private BigDecimal subTotal;
+
+    private BigDecimal priceAtPurchase;
 }

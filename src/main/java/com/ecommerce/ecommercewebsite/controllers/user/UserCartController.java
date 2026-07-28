@@ -3,6 +3,7 @@ package com.ecommerce.ecommercewebsite.controllers.user;
 import com.ecommerce.ecommercewebsite.dto.AddToCartRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.AddToCartResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.UpdateCartRequestDTO;
+import com.ecommerce.ecommercewebsite.dto.UpdateCartResponseDTO;
 import com.ecommerce.ecommercewebsite.model.User;
 import com.ecommerce.ecommercewebsite.repositories.CartRepository;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
@@ -40,10 +41,10 @@ public class UserCartController {
 
     //  update  cart means  change the    quantity of the cart
     @PutMapping("/cart/update/{cartItemId}")
-    public ResponseEntity<ApiResponse<String>> updateCart(@PathVariable Long cartItemId, Principal principal, @RequestBody UpdateCartRequestDTO updateCartRequestDTO) {
+    public ResponseEntity<ApiResponse<UpdateCartResponseDTO>> updateCart(@PathVariable Long cartItemId, Principal principal, @RequestBody UpdateCartRequestDTO updateCartRequestDTO) {
         String email = principal.getName();
-        String msg = userService.updateCart(cartItemId, email, updateCartRequestDTO);
-        ApiResponse<String> apiResponse = new ApiResponse<>(msg, null);
+        UpdateCartResponseDTO responseDTO = userService.updateCart(cartItemId, email, updateCartRequestDTO);
+        ApiResponse<UpdateCartResponseDTO> apiResponse = new ApiResponse<>("Success", responseDTO);
         return ResponseEntity.ok(apiResponse);
 
     }

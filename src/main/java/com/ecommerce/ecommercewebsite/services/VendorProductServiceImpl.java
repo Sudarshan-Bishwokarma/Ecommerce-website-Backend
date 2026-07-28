@@ -14,14 +14,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -92,13 +89,13 @@ public class VendorProductServiceImpl implements VendorProductService {
         //  if   i has  variant
         if (hasVariants) {
 
-            List<ProductVariants> variants = new ArrayList<>();
+            List<ProductVariant> variants = new ArrayList<>();
 
             for (int i = 0; i < request.getVariants().size(); i++) {
 
                 ProductVariantRequestDTO dto = request.getVariants().get(i);
 
-                ProductVariants v = new ProductVariants();
+                ProductVariant v = new ProductVariant();
                 v.setProduct(savedProduct);
                 v.setSize(dto.getSize());
                 v.setColor(dto.getColor());
@@ -180,7 +177,7 @@ public class VendorProductServiceImpl implements VendorProductService {
             List<ProductVariantUpdateDTO> variantList = request.getVariants();
             for (ProductVariantUpdateDTO v : variantList) {
                 if (v.getVariantId() != null) {
-                    ProductVariants existingVariant = productVariantsRepository.findById(v.getVariantId()).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND));
+                    ProductVariant existingVariant = productVariantsRepository.findById(v.getVariantId()).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND));
                     existingVariant.setSize(v.getSize());
                     existingVariant.setColor(v.getColor());
                     existingVariant.setPrice(v.getPrice());
@@ -194,7 +191,7 @@ public class VendorProductServiceImpl implements VendorProductService {
                         }
                     }
                 } else {
-                    ProductVariants newVariant = new ProductVariants();
+                    ProductVariant newVariant = new ProductVariant();
                     newVariant.setSize(v.getSize());
                     newVariant.setColor(v.getColor());
                     newVariant.setPrice(v.getPrice());
@@ -220,7 +217,7 @@ public class VendorProductServiceImpl implements VendorProductService {
         if (request.getDeletedVariantIds() != null && !request.getDeletedVariantIds().isEmpty()) {
             for (Long variantId : request.getDeletedVariantIds()) {
 
-                ProductVariants variant =
+                ProductVariant variant =
                         productVariantsRepository.findById(variantId)
                                 .orElseThrow(() ->
                                         new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND)

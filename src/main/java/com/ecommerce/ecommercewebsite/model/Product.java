@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class Product {
     @Lob
     @Column(columnDefinition = "LONGBLOB")
     private byte[] productImage;
-    private Double price;
+    private BigDecimal price;
     private Integer stock;
     @Enumerated(EnumType.STRING)
     private ProductStatus status;
@@ -39,6 +40,6 @@ public class Product {
     @JoinColumn(name = "vendor_id")
     private User vendor;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductVariants> productVariants = new ArrayList<>();
+    private List<ProductVariant> productVariants = new ArrayList<>();
 
 }
