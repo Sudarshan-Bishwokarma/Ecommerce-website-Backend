@@ -15,6 +15,9 @@ public class Category {
     @Column(name = "category_id") // match the actual DB column
     private Long id;
     private String categoryName;
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] categoryImage;
 
 
 }

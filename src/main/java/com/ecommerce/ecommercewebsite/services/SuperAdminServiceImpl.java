@@ -1,26 +1,31 @@
 package com.ecommerce.ecommercewebsite.services;
 
-import com.ecommerce.ecommercewebsite.dto.VendorResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.*;
 import com.ecommerce.ecommercewebsite.enums.ApprovalStatus;
 import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
+import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
+import com.ecommerce.ecommercewebsite.enums.ProductStatus;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.exception.UserNotFoundException;
+import com.ecommerce.ecommercewebsite.mappers.CategoryMapper;
+import com.ecommerce.ecommercewebsite.mappers.ProductMapper;
 import com.ecommerce.ecommercewebsite.mappers.VendorMapper;
-import com.ecommerce.ecommercewebsite.model.BusinessProfile;
-import com.ecommerce.ecommercewebsite.model.Role;
-import com.ecommerce.ecommercewebsite.model.User;
-import com.ecommerce.ecommercewebsite.repositories.BusinessProfileRepository;
-import com.ecommerce.ecommercewebsite.repositories.RoleRepository;
-import com.ecommerce.ecommercewebsite.repositories.UserRepository;
+import com.ecommerce.ecommercewebsite.model.*;
+import com.ecommerce.ecommercewebsite.repositories.*;
+import org.aspectj.apache.bcel.classfile.Module;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SuperAdminServiceImpl implements SuperAdminService {
@@ -28,6 +33,8 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     UserRepository userRepository;
     @Autowired
     RoleRepository roleRepository;
+    @Autowired
+    CategoryRepository categoryRepository;
 
     @Autowired
     private BusinessProfileRepository businessProfileRepository;
@@ -35,6 +42,12 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     private VendorMapper vendorMapper;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private CategoryMapper categoryMapper;
+    @Autowired
+    private ProductMapper productMapper;
+    @Autowired
+    private ProductRepository productRepository;
 
 
     @Override
@@ -52,17 +65,28 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     }
 
     @Override
-    public String approveVendor(Long id) {
+    public String updateVendorApproval(Long id, ApprovalStatus status) {
+
+
         User user = userRepository.findById(id).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
-        if (!user.isVerified()) {
-            throw new ApiException(AuthErrorCode.NOT_VERIFIED);
-        }
+
         BusinessProfile businessProfile = businessProfileRepository.findByUser(user).orElseThrow(() -> new ApiException(AuthErrorCode.BUSINESS_PROFILE_NOT_FOUND));
-        if (businessProfile.getApprovalStatus() != ApprovalStatus.APPROVED) {
-            businessProfile.setApprovalStatus(ApprovalStatus.APPROVED);
-            businessProfileRepository.save(businessProfile);
+
+        if (status != ApprovalStatus.APPROVED && status != ApprovalStatus.REJECTED) {
+            throw new ApiException(AuthErrorCode.INVALID_STATUS);
         }
-        return " Approved Successfully";
+
+        if (businessProfile.getApprovalStatus() != ApprovalStatus.PENDING) {
+
+            throw new ApiException(AuthErrorCode.INVALID_STATUS);
+        }
+
+        businessProfile.setApprovalStatus(status);
+
+        businessProfileRepository.save(businessProfile);
+
+
+        return "Vendor approval updated successfully";
     }
 
     @Override
@@ -71,6 +95,80 @@ public class SuperAdminServiceImpl implements SuperAdminService {
         Page<BusinessProfile> profiles = businessProfileRepository.findByApprovalStatus(ApprovalStatus.PENDING, pageable);
         return profiles.map(vendorMapper::map);
 
+    }
+
+    @Override
+    public Page<ProductResponseDTO> getPendingProducts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("productId").descending()); //  admin  see the latest  product
+        Page<Product> pendingProducts = productRepository.findByStatus(ProductStatus.APPROVAL_PENDING, pageable);
+        return pendingProducts.map(productMapper::mapToDTO);
+    }
+
+    @Override
+    public String updateApprovalProduct(Long id, ProductStatus status) {
+        Product product = productRepository.findById(id).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
+        if (!product.getStatus().equals(ProductStatus.APPROVAL_PENDING)) {
+            throw new ApiException(ProductErrorCode.INVALID_PRODUCT_STATUS);
+        }
+        if (status != ProductStatus.APPROVED && status != ProductStatus.REJECTED) {
+            throw new ApiException(ProductErrorCode.INVALID_PRODUCT_STATUS);
+        }
+        product.setStatus(status);
+        productRepository.save(product);
+        return "Product approval status updated successfully";
+    }
+
+
+    @Override
+
+    public CategoryResponseDTO addCategory(CategoryRequestDTO categoryRequestDTO) {
+        boolean value = categoryRepository.existsByCategoryNameIgnoreCase(categoryRequestDTO.getCategoryName());
+        if (value) {
+            throw new ApiException(ProductErrorCode.CATEGORY_ALREADY_EXISTS);
+        }
+        Category category = new Category();
+        category.setCategoryName(categoryRequestDTO.getCategoryName());
+        if (categoryRequestDTO.getCategoryImage() != null) {
+            try {
+                category.setCategoryImage(categoryRequestDTO.getCategoryImage().getBytes());
+            } catch (IOException e) {
+                throw new ApiException(ProductErrorCode.IMAGE_UPLOADED_FAILED);
+            }
+        }
+        Category savedCategory = categoryRepository.save(category);
+        CategoryResponseDTO categoryResponseDTO = categoryMapper.mapToDTO(savedCategory);
+        return categoryResponseDTO;
+    }
+
+    @Override
+    public CategoryResponseDTO updateCategory(CategoryUpdateRequestDTO categoryUpdateRequestDTO, Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() ->
+                        new ApiException(ProductErrorCode.CATEGORY_NOT_FOUND)
+                );
+
+        if (!category.getCategoryName()
+                .equalsIgnoreCase(categoryUpdateRequestDTO.getCategoryName())
+                &&
+                categoryRepository.existsByCategoryNameIgnoreCase(
+                        categoryUpdateRequestDTO.getCategoryName()
+                )) {
+
+            throw new ApiException(
+                    ProductErrorCode.CATEGORY_ALREADY_EXISTS
+            );
+        }
+
+        category.setCategoryName(categoryUpdateRequestDTO.getCategoryName());
+        if (categoryUpdateRequestDTO.getCategoryImage() != null) {
+            try {
+                category.setCategoryImage(categoryUpdateRequestDTO.getCategoryImage().getBytes());
+            } catch (IOException e) {
+                throw new ApiException(ProductErrorCode.IMAGE_UPLOADED_FAILED);
+            }
+        }
+        CategoryResponseDTO categoryResponseDTO = categoryMapper.mapToDTO(categoryRepository.save(category));
+        return categoryResponseDTO;
     }
 
 

@@ -4,6 +4,7 @@ import com.ecommerce.ecommercewebsite.dto.BusinessProfileRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.VendorResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.ApprovalStatus;
 import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
+import com.ecommerce.ecommercewebsite.enums.VendorAccessStatus;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.mappers.VendorMapper;
 import com.ecommerce.ecommercewebsite.model.BusinessDocument;
@@ -56,12 +57,21 @@ public class BusinessProfileServiceImpl implements BusinessProfileService {
     }
 
     @Override
-    public boolean isBusinessProfileCompleted(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
-        boolean status = businessProfileRepository.findByUser(user)
-                .map(BusinessProfile::isProfileCompleted)
-                .orElse(false);
-        System.out.println("Business Status = " + status);
-        return status;
+    public VendorAccessStatus getVendorAccessStatus(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.VENDOR_NOT_FOUND));
+        BusinessProfile businessProfile = businessProfileRepository.findByUser(user).orElseThrow(() -> new ApiException(AuthErrorCode.BUSINESS_PROFILE_NOT_FOUND));
+
+        if (!businessProfile.isProfileCompleted()) {
+            return VendorAccessStatus.NOT_COMPLETED;
+        }
+        if (businessProfile.getApprovalStatus() == ApprovalStatus.PENDING) {
+            return VendorAccessStatus.PENDING_APPROVAL;
+        }
+
+        if (businessProfile.getApprovalStatus() == ApprovalStatus.APPROVED) {
+            return VendorAccessStatus.APPROVED;
+        }
+        return VendorAccessStatus.REJECTED;
+
     }
 }

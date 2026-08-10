@@ -1,6 +1,6 @@
 package com.ecommerce.ecommercewebsite.controllers.common;
 
-import com.ecommerce.ecommercewebsite.dto.ProductDetailResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.VendorProductDetailResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.ProductService;
@@ -25,18 +25,14 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    // get product details
-    @GetMapping("/product/{id}")
-    ResponseEntity<ApiResponse<ProductDetailResponseDTO>> getProductDetailsById(@PathVariable Long id) {
-        ProductDetailResponseDTO details = productService.getProductDetailsById(id);
-        ApiResponse<ProductDetailResponseDTO> apiResponse = new ApiResponse<>("Product Fetched Successfully", details);
-        return ResponseEntity.ok(apiResponse);
-    }
 
     @GetMapping("/all-products")
-    public ResponseEntity<ApiResponse<List<ProductResponseDTO>>> getAllProducts() {
-        List<ProductResponseDTO> allProducts = productService.getAllProducts();
-        ApiResponse<List<ProductResponseDTO>> apiResponse = new ApiResponse<>("Products Fetched Successfully", allProducts);
+    public ResponseEntity<ApiResponse<Page<ProductResponseDTO>>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<ProductResponseDTO> allProducts = productService.getAllProducts(page, size);
+        ApiResponse<Page<ProductResponseDTO>> apiResponse = new ApiResponse<>("Products Fetched Successfully", allProducts);
         return ResponseEntity.ok(apiResponse);
     }
 

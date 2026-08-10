@@ -1,6 +1,8 @@
 package com.ecommerce.ecommercewebsite.services;
 
-import com.ecommerce.ecommercewebsite.dto.VendorResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.*;
+import com.ecommerce.ecommercewebsite.enums.ApprovalStatus;
+import com.ecommerce.ecommercewebsite.enums.ProductStatus;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -10,7 +12,15 @@ public interface SuperAdminService {
 
     public Page<VendorResponseDTO> getAllVendors(int page, int size);
 
-    public String approveVendor(Long id);
+    public String updateVendorApproval(Long id, ApprovalStatus status);
 
     public Page<VendorResponseDTO> getAllPendingVendors(int page, int size);
+
+    public Page<ProductResponseDTO> getPendingProducts(int page, int size);
+
+    public String updateApprovalProduct(Long id, ProductStatus status);
+
+    public CategoryResponseDTO addCategory(CategoryRequestDTO categoryRequestDTO);
+
+    public CategoryResponseDTO updateCategory(CategoryUpdateRequestDTO categoryUpdateRequestDTO, Long categoryId);
 }

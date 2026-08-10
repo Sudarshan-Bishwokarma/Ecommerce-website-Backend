@@ -3,20 +3,19 @@ package com.ecommerce.ecommercewebsite.controllers.vendor;
 import com.ecommerce.ecommercewebsite.dto.*;
 import com.ecommerce.ecommercewebsite.enums.ProductStatus;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
+import com.ecommerce.ecommercewebsite.services.FeaturedRequestVendorService;
 import com.ecommerce.ecommercewebsite.services.VendorProductService;
 import com.ecommerce.ecommercewebsite.services.AdminService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +26,9 @@ public class VendorProductController {
     VendorProductService productService;
     @Autowired
     private AdminService adminService;
+    @Autowired
+    private FeaturedRequestVendorService featuredProductService;
+
 
     @PostMapping(value = "/add-product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ProductResponseDTO>> addProduct(
@@ -51,10 +53,11 @@ public class VendorProductController {
         );
     }
 
-    // publish product
-    @PatchMapping("/{id}/update-status")
-    public ResponseEntity<ApiResponse<String>> updateStatus(@PathVariable Long id, @RequestBody ProductStatusUpdateRequest request) {
-        String response = productService.updateStatus(id, request);
+    //  update product
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<String>> updateStatus(@PathVariable Long id, Principal principal, @RequestParam ProductStatus status) {
+        String email = principal.getName();
+        String response = productService.updateStatus(id, email, status);
         ApiResponse<String> apiResponse = new ApiResponse<>("Status Updated Successfully", response);
         return ResponseEntity.ok(apiResponse);
     }
@@ -95,6 +98,13 @@ public class VendorProductController {
         return ResponseEntity.ok(apiResponse);
     }
 
+    // get product details
+    @GetMapping("/product-detail/{id}")
+    ResponseEntity<ApiResponse<VendorProductDetailResponseDTO>> getProductDetailsById(@PathVariable Long id) {
+        VendorProductDetailResponseDTO details = productService.getProductDetailsById(id);
+        ApiResponse<VendorProductDetailResponseDTO> apiResponse = new ApiResponse<>("Product Fetched Successfully", details);
+        return ResponseEntity.ok(apiResponse);
+    }
 
     // get  products
     @GetMapping("/products")
@@ -113,7 +123,26 @@ public class VendorProductController {
         ApiResponse<Page<ProductResponseDTO>> apiResponse = new ApiResponse<>("Products fetched Successfully", responseDTOS);
         return ResponseEntity.ok(apiResponse);
     }
+    // request for product  approval
 
+    @PostMapping("/product/{id}/request-approval")
+    public ResponseEntity<ApiResponse<String>> requestApproval(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        String response = productService.requestApproval(id, email);
+        ApiResponse<String> apiResponse = new ApiResponse<>("Product approval status updated successfully", response);
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    //
+    @PatchMapping("/{id}/resubmit")
+    public ResponseEntity<ApiResponse<String>> resubmitProduct(@PathVariable Long id, Principal principal) {
+        String email = principal.getName();
+
+        String response = productService.reSubmitProduct(id, email);
+
+        return ResponseEntity.ok(new ApiResponse<>("Product resubmitted", response)
+        );
+    }
 
 }
 

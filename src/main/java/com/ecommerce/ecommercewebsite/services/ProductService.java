@@ -1,6 +1,6 @@
 package com.ecommerce.ecommercewebsite.services;
 
-import com.ecommerce.ecommercewebsite.dto.ProductDetailResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.VendorProductDetailResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
 import org.springframework.data.domain.Page;
 
@@ -8,11 +8,10 @@ import java.util.List;
 
 public interface ProductService {
 
-    public List<ProductResponseDTO> getAllProducts();
+    public Page<ProductResponseDTO> getAllProducts(int page, int size);
 
     public List<ProductResponseDTO> getProductsByCategoryId(Long id);
 
-    public ProductDetailResponseDTO getProductDetailsById(Long id);
 
     public List<ProductResponseDTO> filterProductsByPrice(Double minPrice, Double maxPrice);
 

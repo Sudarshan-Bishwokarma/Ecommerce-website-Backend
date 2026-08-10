@@ -43,7 +43,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String method = request.getMethod();
 
-        // ✅ 1. ALWAYS allow preflight requests (VERY IMPORTANT)
+        //  1. ALWAYS allow preflight requests (VERY IMPORTANT)
         if ("OPTIONS".equalsIgnoreCase(method)) {
             response.setStatus(HttpServletResponse.SC_OK);
             filterChain.doFilter(request, response);
@@ -52,13 +52,13 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // ✅ 2. Skip JWT for public APIs
+        // 2. Skip JWT for public APIs
         if (isPublic(path)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // ✅ 3. Get Authorization header
+        //  3. Get Authorization header
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -79,7 +79,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // ✅ 4. Set authentication if not already set
+        //  4. Set authentication if not already set
         if (username != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
 
@@ -105,7 +105,7 @@ public class JwtFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 
-        // ✅ 5. Continue request
+        //  5. Continue request
         filterChain.doFilter(request, response);
     }
 

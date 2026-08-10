@@ -17,14 +17,20 @@ public interface VendorProductService {
             List<MultipartFile> variantImages
     );
 
-    public String updateStatus(Long id, ProductStatusUpdateRequest request);
+    public String updateStatus(Long id, String email, ProductStatus status);
 
     public ProductResponseDTO updateProduct(Long id, String email, ProductUpdateRequestDTO request, MultipartFile productImage, Map<String, MultipartFile> files);
 
     public String deleteProduct(Long id, String email);
 
+    public VendorProductDetailResponseDTO getProductDetailsById(Long id);
+
     public Page<ProductResponseDTO> getMyProducts(String email, int page, int size);
 
     public Page<ProductResponseDTO> getProducts(String email, Long districtId, Long categoryId, String sortType, String search, int page, int size);
+
+    public String requestApproval(Long id, String email);
+
+    public String reSubmitProduct(Long id, String email);
 
 }

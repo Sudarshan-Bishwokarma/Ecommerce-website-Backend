@@ -1,8 +1,17 @@
 package com.ecommerce.ecommercewebsite.enums;
 
 public enum ProductStatus {
+    DRAFT,
+
+    APPROVAL_PENDING,
+
+    APPROVED,
+
     ACTIVE,
+
     INACTIVE,
+
     OUT_OF_STOCK,
-    DRAFT
+    REJECTED,
+    PRODUCT_UNDER_REVIEW
 }

@@ -20,6 +20,7 @@ public class ProductMapper {
         dto.setProductName(product.getProductName());
         dto.setProductDescription(product.getProductDescription());
         dto.setStatus(product.getStatus());
+        dto.setFeatured(product.isFeatured());
         if (product.getCategory() != null) {
             dto.setProductCategory(product.getCategory().getCategoryName());
         }
@@ -41,22 +42,14 @@ public class ProductMapper {
         if (variants != null && !variants.isEmpty()) {
 
             dto.setHasVariants(true);
-
-            BigDecimal minPrice = null;
             int totalStock = 0;
 
             for (ProductVariant v : variants) {
-
-                if (v.getPrice() != null && (minPrice == null || v.getPrice().compareTo(minPrice) < 0)) {
-                    minPrice = v.getPrice();
-                }
 
                 if (v.getStock() != null) {
                     totalStock += v.getStock();
                 }
             }
-
-            dto.setProductPrice(minPrice);
             dto.setStock(totalStock);
 
         } else {
@@ -65,7 +58,7 @@ public class ProductMapper {
             dto.setProductPrice(product.getPrice());
             dto.setStock(product.getStock());
         }
-
+        dto.setProductPrice(product.getDisplayPrice());
         return dto;
     }
 }

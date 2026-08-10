@@ -16,6 +16,7 @@ public class ProductResponseDTO {
     private Integer stock;
     private String productDescription;
     private ProductStatus status;
+    private boolean featured;
     // min price for variants and normal price for    no variants
     private BigDecimal productPrice;
     private String productCategory;

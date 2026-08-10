@@ -1,18 +1,14 @@
 package com.ecommerce.ecommercewebsite.services;
 
-import com.ecommerce.ecommercewebsite.dto.ProductDetailResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
-import com.ecommerce.ecommercewebsite.mappers.ProductDetailsMapper;
+import com.ecommerce.ecommercewebsite.mappers.VendorProductDetailsMapper;
 import com.ecommerce.ecommercewebsite.mappers.ProductMapper;
 import com.ecommerce.ecommercewebsite.model.District;
 import com.ecommerce.ecommercewebsite.model.Product;
 import com.ecommerce.ecommercewebsite.model.ProductVariant;
-import com.ecommerce.ecommercewebsite.repositories.CategoryRepository;
-import com.ecommerce.ecommercewebsite.repositories.DistrictRepository;
-import com.ecommerce.ecommercewebsite.repositories.ProductRepository;
-import com.ecommerce.ecommercewebsite.repositories.ProductVariantsRepository;
+import com.ecommerce.ecommercewebsite.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,22 +29,18 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductVariantsRepository productVariantsRepository;
     @Autowired
-    private ProductDetailsMapper detailsMapper;
+    private VendorProductDetailsMapper detailsMapper;
     @Autowired
     private ProductMapper mapper;
+    @Autowired
+    private FeaturedRequestRepository featuredRequestRepository;
 
     @Override
-    public List<ProductResponseDTO> getAllProducts() {
-        List<Product> allProducts = productRepository.findAll();
-        if (allProducts.isEmpty()) {
-            return new ArrayList<>();
-        }
-        List<ProductResponseDTO> dtos = new ArrayList<>();
-        for (Product product : allProducts) {
-            ProductResponseDTO dto = mapper.mapToDTO(product);
-            dtos.add(dto);
-        }
-        return dtos;
+    public Page<ProductResponseDTO> getAllProducts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> allProducts = productRepository.findAll(pageable);
+        return allProducts.map(mapper::mapToDTO);
+
     }
 
     @Override
@@ -64,14 +56,6 @@ public class ProductServiceImpl implements ProductService {
 
     }
 
-    @Override
-    public ProductDetailResponseDTO getProductDetailsById(Long id) {
-        Product product = productRepository.findById(id).
-                orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
-        ProductDetailResponseDTO dto = detailsMapper.mapToDTO(product);
-
-        return dto;
-    }
 
     @Override
     public List<ProductResponseDTO> filterProductsByPrice(Double minPrice, Double maxPrice) {

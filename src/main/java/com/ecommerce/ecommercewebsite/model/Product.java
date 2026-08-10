@@ -27,9 +27,11 @@ public class Product {
     @Column(columnDefinition = "LONGBLOB")
     private byte[] productImage;
     private BigDecimal price;
+    private BigDecimal displayPrice; // used for sorting
     private Integer stock;
     @Enumerated(EnumType.STRING)
     private ProductStatus status;
+    private boolean featured;
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;

@@ -1,10 +1,9 @@
 package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.*;
-import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
-import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
-import com.ecommerce.ecommercewebsite.enums.ProductStatus;
+import com.ecommerce.ecommercewebsite.enums.*;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
+import com.ecommerce.ecommercewebsite.mappers.VendorProductDetailsMapper;
 import com.ecommerce.ecommercewebsite.mappers.ProductMapper;
 import com.ecommerce.ecommercewebsite.mappers.VendorMapper;
 import com.ecommerce.ecommercewebsite.model.*;
@@ -18,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +38,11 @@ public class VendorProductServiceImpl implements VendorProductService {
     private ProductMapper mapper;
     @Autowired
     private VendorMapper vendorMapper;
+    @Autowired
+    private VendorProductDetailsMapper detailsMapper;
+    @Autowired
+    private FeaturedRequestRepository featuredRequestRepository;
+
 
     @Override
     public ProductResponseDTO addProduct(
@@ -73,20 +78,21 @@ public class VendorProductServiceImpl implements VendorProductService {
             throw new ApiException(ProductErrorCode.PRODUCT_IMAGE_NOT_FOUND);
         }
 
-        boolean hasVariants =
-                request.getVariants() != null && !request.getVariants().isEmpty();
+        product.setStatus(ProductStatus.DRAFT);
+        boolean hasVariants = request.getVariants() != null && !request.getVariants().isEmpty();
 
         product.setHasVariants(hasVariants);
 
-        // SIMPLE PRODUCT
+        // simple product
         if (!hasVariants) {
             product.setPrice(request.getPrice());
+            product.setDisplayPrice(request.getPrice());
             product.setStock(request.getStock());
         }
 
         Product savedProduct = productRepository.save(product);
 
-        //  if   i has  variant
+        //  if   it has  variant
         if (hasVariants) {
 
             List<ProductVariant> variants = new ArrayList<>();
@@ -102,7 +108,7 @@ public class VendorProductServiceImpl implements VendorProductService {
                 v.setPrice(dto.getPrice());
                 v.setStock(dto.getStock());
 
-                // VARIANT IMAGE
+                // variant image
                 if (variantImages != null && i < variantImages.size()) {
                     try {
                         v.setImage(variantImages.get(i).getBytes());
@@ -116,23 +122,55 @@ public class VendorProductServiceImpl implements VendorProductService {
 
             productVariantsRepository.saveAll(variants);
             savedProduct.setProductVariants(variants);
+            //  set  minimum  price d display price variants
+            BigDecimal minPrice = null;
+            for (ProductVariant v : variants) {
+                if (v.getPrice() != null && (minPrice == null || v.getPrice().compareTo(minPrice) < 0)) {
+                    minPrice = v.getPrice();
+                }
+            }
+            savedProduct.setDisplayPrice(minPrice);
+            productRepository.save(savedProduct);
+
         }
 
         return mapper.mapToDTO(savedProduct);
     }
 
     @Override
-    public String updateStatus(Long id, ProductStatusUpdateRequest request) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
-        product.setStatus(request.getStatus());
+    public String updateStatus(Long id, String email, ProductStatus status) {
+        User vendor = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.VENDOR_NOT_FOUND));
+        Product product = productRepository.findByProductIdAndVendor(id, vendor).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
+        ProductStatus currentStatus = product.getStatus();
+        // vendor can only change ACTIVE and INACTIVE
+        if (status != ProductStatus.ACTIVE && status != ProductStatus.INACTIVE) {
+            throw new ApiException(ProductErrorCode.UNAUTHORIZED_STATUS_CHANGE);
+        }
+
+        if (currentStatus != ProductStatus.ACTIVE && currentStatus != ProductStatus.INACTIVE && currentStatus != ProductStatus.APPROVED) {
+            throw new ApiException(ProductErrorCode.INVALID_PRODUCT_STATUS);
+        }
+        product.setStatus(status);
         productRepository.save(product);
-        return "Success";
+
+
+        return "Product Status  Successfully";
     }
 
     @Override
     public ProductResponseDTO updateProduct(Long id, String email, ProductUpdateRequestDTO request, MultipartFile productImage, Map<String, MultipartFile> variantImages) {
         // check if the   product exist in the database
         Product product = productRepository.findById(id).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
+        // Verify vendor owns product
+        if (!product.getVendor().getEmail().equals(email)) {
+            throw new ApiException(ProductErrorCode.UNAUTHORIZED_PRODUCT_ACCESS);
+        }
+        ProductStatus currentStatus = product.getStatus();
+
+        if (currentStatus == ProductStatus.ACTIVE || currentStatus == ProductStatus.APPROVED || currentStatus == ProductStatus.APPROVAL_PENDING) {
+
+            throw new ApiException(ProductErrorCode.PRODUCT_NOT_EDITABLE);
+        }
         product.setProductName(request.getProductName());
         product.setProductDescription(request.getProductDescription());
         Category category = categoryRepository.findById(request.getCategoryId())
@@ -140,44 +178,41 @@ public class VendorProductServiceImpl implements VendorProductService {
         product.setCategory(category);
         District district = districtRepository.findById(request.getDistrictId()).orElseThrow(() -> new ApiException(ProductErrorCode.DISTRICT_NOT_FOUND));
         product.setDistrict(district);
-        // Verify vendor owns product
-        if (!product.getVendor().getEmail().equals(email)) {
-            throw new ApiException(ProductErrorCode.UNAUTHORIZED_PRODUCT_ACCESS);
-        }
+
         if (productImage != null && !productImage.isEmpty()) {
 
             try {
 
-                product.setProductImage(
-                        productImage.getBytes()
-                );
+                product.setProductImage(productImage.getBytes());
 
             } catch (IOException e) {
 
-                throw new ApiException(
-                        ProductErrorCode.PRODUCT_IMAGE_NOT_FOUND
-                );
-
+                throw new ApiException(ProductErrorCode.PRODUCT_IMAGE_NOT_FOUND);
             }
         }
+        product.setStatus(ProductStatus.DRAFT);
         // simple product
         if (Boolean.FALSE.equals(request.getHasVariants())) {
 
             product.setHasVariants(false);
             product.setPrice(request.getPrice());
             product.setStock(request.getStock());
+            product.setDisplayPrice(request.getPrice());
+            product.setStock(request.getStock());
 
         }
         // if product has  variant
-        if (request.getHasVariants()) {
+        if (Boolean.TRUE.equals(request.getHasVariants())) {
             product.setHasVariants(true);
-
             product.setPrice(null);
             product.setStock(null);
             List<ProductVariantUpdateDTO> variantList = request.getVariants();
             for (ProductVariantUpdateDTO v : variantList) {
                 if (v.getVariantId() != null) {
                     ProductVariant existingVariant = productVariantsRepository.findById(v.getVariantId()).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND));
+                    if (!existingVariant.getProduct().getProductId().equals(id)) {
+                        throw new ApiException(ProductErrorCode.UNAUTHORIZED_PRODUCT_ACCESS);
+                    }
                     existingVariant.setSize(v.getSize());
                     existingVariant.setColor(v.getColor());
                     existingVariant.setPrice(v.getPrice());
@@ -199,7 +234,6 @@ public class VendorProductServiceImpl implements VendorProductService {
                     newVariant.setProduct(product);
                     MultipartFile image = variantImages.get("newVariantImage_" + variantList.indexOf(v));
 
-
                     if (image != null && !image.isEmpty()) {
                         try {
                             newVariant.setImage(image.getBytes());
@@ -210,31 +244,39 @@ public class VendorProductServiceImpl implements VendorProductService {
                     product.getProductVariants().add(newVariant);
 
                 }
+
             }
 
         }
         //  delete variant
         if (request.getDeletedVariantIds() != null && !request.getDeletedVariantIds().isEmpty()) {
             for (Long variantId : request.getDeletedVariantIds()) {
-
-                ProductVariant variant =
-                        productVariantsRepository.findById(variantId)
-                                .orElseThrow(() ->
-                                        new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND)
-                                );
-
-
+                ProductVariant variant = productVariantsRepository.findById(variantId).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND));
                 // check variant belongs to this product
                 if (!variant.getProduct().getProductId().equals(id)) {
-
-                    throw new ApiException(
-                            ProductErrorCode.UNAUTHORIZED_PRODUCT_ACCESS
+                    throw new ApiException(ProductErrorCode.UNAUTHORIZED_PRODUCT_ACCESS
                     );
                 }
 
                 productVariantsRepository.delete(variant);
             }
         }
+        BigDecimal minPrice = null;
+        int totalStock = 0;
+
+        for (ProductVariant variant : product.getProductVariants()) {
+
+            if (variant.getPrice() != null &&
+                    (minPrice == null || variant.getPrice().compareTo(minPrice) < 0)) {
+                minPrice = variant.getPrice();
+            }
+
+            if (variant.getStock() != null) {
+                totalStock += variant.getStock();
+            }
+        }
+
+        product.setDisplayPrice(minPrice);
         Product savedProduct = productRepository.save(product);
 
         ProductResponseDTO dto = mapper.mapToDTO(savedProduct);
@@ -262,6 +304,25 @@ public class VendorProductServiceImpl implements VendorProductService {
 
     }
 
+    @Override
+    public VendorProductDetailResponseDTO getProductDetailsById(Long id) {
+        Product product = productRepository.findById(id).
+                orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND)); //
+        VendorProductDetailResponseDTO dto = detailsMapper.mapToDTO(product);
+        FeaturedRequest request = featuredRequestRepository.findTopByProductOrderByIdDesc(product);//  we get the latest  product  request
+        if (request == null) {
+            dto.setFeaturedRequestStatus(FeaturedRequestStatus.NOT_REQUESTED);
+        } else {
+            dto.setFeaturedRequestId(request.getId());
+            dto.setFeaturedRequestStatus(request.getStatus());
+            dto.setFeaturedPlanName(request.getFeaturedPlan().getName());
+            dto.setFeaturedDurationDays(request.getFeaturedPlan().getDurationDays());
+            dto.setFeaturedPlanId(request.getFeaturedPlan().getId());
+        }
+
+
+        return dto;
+    }
 
     @Override
     public Page<ProductResponseDTO> getProducts(String email, Long districtId, Long categoryId, String sortType, String search, int page, int size) {
@@ -271,10 +332,10 @@ public class VendorProductServiceImpl implements VendorProductService {
         if (sortType != null) {
             switch (sortType) {
                 case "priceAsc":
-                    pageable = PageRequest.of(page, size, Sort.by("productPrice").ascending());
+                    pageable = PageRequest.of(page, size, Sort.by("displayPrice").ascending());
                     break;
                 case "priceDesc":
-                    pageable = PageRequest.of(page, size, Sort.by("productPrice").descending());
+                    pageable = PageRequest.of(page, size, Sort.by("displayPrice").descending());
                     break;
                 case "nameAsc":
                     pageable = PageRequest.of(page, size, Sort.by("productName").ascending());
@@ -308,5 +369,33 @@ public class VendorProductServiceImpl implements VendorProductService {
             allProducts = productRepository.findByVendor_Id(vendor_id, pageable);
         }
         return allProducts.map(mapper::mapToDTO);
+    }
+
+    @Override
+    public String requestApproval(Long id, String email) {
+        User vendor = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.VENDOR_NOT_FOUND));
+        Product product = productRepository.findByProductIdAndVendor(id, vendor).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
+        if (product.getStatus() != ProductStatus.DRAFT && product.getStatus() != ProductStatus.REJECTED) {
+            throw new ApiException(ProductErrorCode.INVALID_PRODUCT_STATUS);
+        }
+        product.setStatus(ProductStatus.APPROVAL_PENDING);
+        productRepository.save(product);
+
+        return "Success";
+    }
+
+    @Override
+    public String reSubmitProduct(Long id, String email) {
+        User vendor = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.VENDOR_NOT_FOUND));
+        Product product = productRepository.findByProductIdAndVendor(id, vendor).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
+        if (product.getStatus() != ProductStatus.REJECTED) {
+            throw new ApiException(ProductErrorCode.INVALID_PRODUCT_STATUS);
+        }
+        product.setStatus(ProductStatus.DRAFT);
+
+        productRepository.save(product);
+
+        return "Product moved to draft";
+
     }
 }
