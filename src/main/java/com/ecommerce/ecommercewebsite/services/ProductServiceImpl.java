@@ -1,8 +1,10 @@
 package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.users.ProductDetailResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
+import com.ecommerce.ecommercewebsite.mappers.ProductDetailMapper;
 import com.ecommerce.ecommercewebsite.mappers.VendorProductDetailsMapper;
 import com.ecommerce.ecommercewebsite.mappers.ProductMapper;
 import com.ecommerce.ecommercewebsite.model.District;
@@ -34,6 +36,8 @@ public class ProductServiceImpl implements ProductService {
     private ProductMapper mapper;
     @Autowired
     private FeaturedRequestRepository featuredRequestRepository;
+    @Autowired
+    private ProductDetailMapper productDetailMapper;
 
     @Override
     public Page<ProductResponseDTO> getAllProducts(int page, int size) {
@@ -79,6 +83,14 @@ public class ProductServiceImpl implements ProductService {
         Page<Product> products = productRepository.findByDistrict_id(id, pageable);
 
         return products.map(mapper::mapToDTO);
+    }
+
+    @Override
+    public ProductDetailResponseDTO getProductDetails(Long id) {
+        Product product = productRepository.findById(id).orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
+        ProductDetailResponseDTO responseDTO = productDetailMapper.mapToDTO(product);
+        return responseDTO;
+
     }
 
 

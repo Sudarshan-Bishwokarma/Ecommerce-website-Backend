@@ -10,13 +10,20 @@ public class AddToCartMapper {
     public AddToCartResponseDTO mapToDTO(CartItem cartItem) {
         AddToCartResponseDTO responseDTO = new AddToCartResponseDTO();
         responseDTO.setCartItemId(cartItem.getId());
-        responseDTO.setProductVariantId(cartItem.getProductVariant().getId());
-        responseDTO.setProductId(cartItem.getProductVariant().getProduct().getProductId());
-        responseDTO.setProductName(cartItem.getProductVariant().getProduct().getProductName());
+        responseDTO.setProductId(cartItem.getProduct().getProductId());
+        responseDTO.setProductName(cartItem.getProduct().getProductName());
+        if (cartItem.getProductVariant() != null) {
+            responseDTO.setProductVariantId(cartItem.getProductVariant().getId());
+            responseDTO.setSize(cartItem.getProductVariant().getSize());
+            responseDTO.setColor((cartItem.getProductVariant().getColor()));
+            responseDTO.setProductPrice(cartItem.getProductVariant().getPrice());
+        } else {
+            responseDTO.setProductVariantId(null);
+            responseDTO.setSize(null);
+            responseDTO.setColor(null);
+            responseDTO.setProductPrice(cartItem.getProduct().getPrice());
+        }
         responseDTO.setQuantity(cartItem.getQuantity());
-        responseDTO.setSize(cartItem.getProductVariant().getSize());
-        responseDTO.setColor((cartItem.getProductVariant().getColor()));
-        responseDTO.setProductPrice(cartItem.getProductVariant().getPrice());
         responseDTO.setTotalPrice(cartItem.getTotalPrice());
 
         return responseDTO;

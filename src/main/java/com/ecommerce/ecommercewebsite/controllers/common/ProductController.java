@@ -2,10 +2,12 @@ package com.ecommerce.ecommercewebsite.controllers.common;
 
 import com.ecommerce.ecommercewebsite.dto.VendorProductDetailResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.ProductResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.users.ProductDetailResponseDTO;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,13 @@ import java.util.List;
 public class ProductController {
     @Autowired
     private ProductService productService;
+
+    @GetMapping("/product/{id}")
+    public ResponseEntity<ApiResponse<ProductDetailResponseDTO>> getProductDetails(@PathVariable Long id) {
+        ProductDetailResponseDTO responseDTO = productService.getProductDetails(id);
+        ApiResponse<ProductDetailResponseDTO> apiResponse = new ApiResponse<>("success", responseDTO);
+        return ResponseEntity.ok(apiResponse);
+    }
 
     // fetch  product  by category  Id
     @GetMapping("/all-products/category/{id}")

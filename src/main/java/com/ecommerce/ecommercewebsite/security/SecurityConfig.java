@@ -59,10 +59,9 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/vendor/**").hasAuthority("ROLE_VENDOR")
                         .requestMatchers("/api/super-admin/**").hasAuthority("ROLE_SUPER_ADMIN")
-
+                        .requestMatchers("/api/super-admin/**").hasAuthority("ROLE_USER")
                         .anyRequest().authenticated()
                 )
-
                 .oauth2Login(oauth -> oauth
                         .successHandler(oAuth2SuccessHandler)
                 )

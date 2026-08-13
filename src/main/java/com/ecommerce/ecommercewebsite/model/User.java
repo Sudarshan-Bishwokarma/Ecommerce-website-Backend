@@ -37,4 +37,6 @@ public class User {
     private Role role;
     @OneToOne
     private Profile profile;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private BusinessProfile businessProfile;
 }

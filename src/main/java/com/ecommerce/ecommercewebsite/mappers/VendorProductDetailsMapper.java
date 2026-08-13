@@ -1,7 +1,7 @@
 package com.ecommerce.ecommercewebsite.mappers;
 
 import com.ecommerce.ecommercewebsite.dto.VendorProductDetailResponseDTO;
-import com.ecommerce.ecommercewebsite.dto.ProductVariantDetailResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.users.ProductVariantDetailResponseDTO;
 import com.ecommerce.ecommercewebsite.model.Product;
 import com.ecommerce.ecommercewebsite.model.ProductVariant;
 import org.springframework.stereotype.Component;

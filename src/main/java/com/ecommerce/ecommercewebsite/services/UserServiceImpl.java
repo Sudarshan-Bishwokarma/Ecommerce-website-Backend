@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.context.request.RequestAttributes;
 
 
 @Service
@@ -39,12 +40,13 @@ public class UserServiceImpl implements UserService {
     AddToCartMapper addToCartMapper;
     @Autowired
     UpdateCartMapper updateCartMapper;
+    
 
     @Override
     public AddToCartResponseDTO addToCart(String email, AddToCartRequestDTO addToCartRequestDTO) {
         User user = userRepository.findByEmail(email).
                 orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
-        //  get or  create a   cart
+        //  get or  create a  cart
         Cart cart = cartRepository.findByUser(user)
                 .orElseGet(() -> {
                             Cart newCart = new Cart();
@@ -57,34 +59,50 @@ public class UserServiceImpl implements UserService {
         Product product = productRepository.findById(addToCartRequestDTO.getProductId())
                 .orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_NOT_FOUND));
         ProductVariant variant = null;
+        Integer availableStock;
+        Integer newQuantity = addToCartRequestDTO.getQuantity();
+
+
         BigDecimal price;
         if (addToCartRequestDTO.getProductVariantId() != null) {
             //   get    product  variant
             variant = productVariantsRepository.findById(addToCartRequestDTO.getProductVariantId())
                     .orElseThrow(() -> new ApiException(ProductErrorCode.PRODUCT_VARIANTS_NOT_FOUND));
             price = variant.getPrice();
+            availableStock = variant.getStock();
 
         } else {
 
             price = product.getPrice();
+            availableStock = product.getStock();
 
         }
 
         //  check if the   product variant  already exist in the cartItem
         CartItem cartItem = cartItemRepository.findByCartAndProductAndProductVariant(cart, product, variant).orElse(null);
+
+
         if (cartItem == null) {
             //   first time adding the  product
+            if (newQuantity > availableStock) {
+                throw new ApiException(ProductErrorCode.INSUFFICIENT_STOCK_AVAILABLE);
+            }
             CartItem newCartItem = new CartItem();
             newCartItem.setCart(cart);
             newCartItem.setProduct(product);
             newCartItem.setProductVariant(variant);
-            newCartItem.setQuantity(addToCartRequestDTO.getQuantity());
-            newCartItem.setTotalPrice(price.multiply(BigDecimal.valueOf(addToCartRequestDTO.getQuantity())));
+            newCartItem.setQuantity(newQuantity);
+            newCartItem.setTotalPrice(price.multiply(BigDecimal.valueOf(newQuantity)));
             cartItem = cartItemRepository.save(newCartItem);
         } else {
             //  if  product  variant   exist  update quantity
-            cartItem.setQuantity(cartItem.getQuantity() + addToCartRequestDTO.getQuantity());
-            cartItem.setTotalPrice(price.multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+            Integer updatedQuantity = cartItem.getQuantity() + newQuantity;
+            if (updatedQuantity > availableStock) {
+                throw new ApiException(ProductErrorCode.INSUFFICIENT_STOCK_AVAILABLE);
+            }
+            cartItem.setQuantity(updatedQuantity);
+            cartItem.setTotalPrice(price.multiply(BigDecimal.valueOf(updatedQuantity)));
+
             cartItemRepository.save(cartItem);
         }
 

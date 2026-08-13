@@ -1,5 +1,6 @@
 package com.ecommerce.ecommercewebsite.dto;
 
+import com.ecommerce.ecommercewebsite.dto.users.ProductVariantDetailResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.FeaturedRequestStatus;
 import com.ecommerce.ecommercewebsite.enums.ProductStatus;
 import lombok.Data;

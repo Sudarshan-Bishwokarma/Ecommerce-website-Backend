@@ -9,7 +9,7 @@ public class AddToCartResponseDTO {
     private Long cartItemId;
 
     private Long productVariantId;
-
+    
     private Long productId;
 
     private String productName;

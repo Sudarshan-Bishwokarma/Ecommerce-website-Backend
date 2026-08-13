@@ -1,4 +1,4 @@
-package com.ecommerce.ecommercewebsite.dto;
+package com.ecommerce.ecommercewebsite.dto.users;
 
 import lombok.Data;
 
@@ -11,5 +11,6 @@ public class ProductVariantDetailResponseDTO {
     private String color;
     private BigDecimal price;
     private Integer stock;
+    private String sku;
     private String variantImageBase64;
 }
