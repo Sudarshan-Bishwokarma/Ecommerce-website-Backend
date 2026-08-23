@@ -4,11 +4,13 @@ import com.ecommerce.ecommercewebsite.dto.AddToCartRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.AddToCartResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.UpdateCartRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.UpdateCartResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.users.CartResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
 import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.exception.CartNotFoundException;
 import com.ecommerce.ecommercewebsite.mappers.AddToCartMapper;
+import com.ecommerce.ecommercewebsite.mappers.CartResponseMapper;
 import com.ecommerce.ecommercewebsite.mappers.UpdateCartMapper;
 import com.ecommerce.ecommercewebsite.model.*;
 import com.ecommerce.ecommercewebsite.repositories.*;
@@ -40,7 +42,9 @@ public class UserServiceImpl implements UserService {
     AddToCartMapper addToCartMapper;
     @Autowired
     UpdateCartMapper updateCartMapper;
-    
+    @Autowired
+    CartResponseMapper cartResponseMapper;
+
 
     @Override
     public AddToCartResponseDTO addToCart(String email, AddToCartRequestDTO addToCartRequestDTO) {
@@ -113,26 +117,28 @@ public class UserServiceImpl implements UserService {
 
     //  get cart item
     @Override
-    public List<AddToCartResponseDTO> getCart(User user) {
+    public CartResponseDTO getCart(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
+
         Cart cart = cartRepository.findByUser(user).orElse(null);
+
+        // User has no cart yet
         if (cart == null) {
-            return new ArrayList<>();
-        }
-        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
-        if (cartItems.isEmpty()) {
-            return new ArrayList<>();
-        }
-        List<AddToCartResponseDTO> dtos = new ArrayList<>();
-        for (CartItem item : cartItems) {
-            AddToCartResponseDTO dto = addToCartMapper.mapToDTO(item);
-            dtos.add(dto);
+
+            CartResponseDTO emptyCart = new CartResponseDTO();
+
+            emptyCart.setCartId(null);
+            emptyCart.setItems(new ArrayList<>());
+            emptyCart.setSubtotal(BigDecimal.ZERO);
+
+            return emptyCart;
         }
 
-        return dtos;
+        return cartResponseMapper.mapToDTO(cart);
     }
 
     @Override
-    public UpdateCartResponseDTO updateCart(Long CartItemId, String email, UpdateCartRequestDTO updateCartRequestDTO) {
+    public CartResponseDTO updateCart(Long CartItemId, String email, UpdateCartRequestDTO updateCartRequestDTO) {
         User user = userRepository.findByEmail(email).
                 orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         CartItem cartItem = cartItemRepository.findById(CartItemId).
@@ -154,12 +160,13 @@ public class UserServiceImpl implements UserService {
         cartItem.setTotalPrice(totalPrice);
         CartItem savedCartItem = cartItemRepository.save(cartItem);
 
-        UpdateCartResponseDTO responseDTO = updateCartMapper.mapToDTO(savedCartItem);
+
+        CartResponseDTO responseDTO = cartResponseMapper.mapToDTO(savedCartItem.getCart());
         return responseDTO;
     }
 
     @Override
-    public String removeCartItem(Long cartItemId, Principal principal) {
+    public CartResponseDTO removeCartItem(Long cartItemId, Principal principal) {
         User user = userRepository.findByEmail(principal.getName()).
                 orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         CartItem cartItem = cartItemRepository.findById(cartItemId).
@@ -168,10 +175,11 @@ public class UserServiceImpl implements UserService {
         if (!cartItem.getCart().getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("Access denied");
         }
-        cartItemRepository.delete(cartItem); //no  return needed
-        System.out.println("Cart Item deleted successfully");
+        cartItemRepository.delete(cartItem);
+        Cart updatedCart = cartRepository.findByUser(user).orElseThrow(() -> new ApiException(ProductErrorCode.CART_ITEM_NOT_FOUND));
 
-        return "Cart Item Deleted Successfully";
+        CartResponseDTO response = cartResponseMapper.mapToDTO(updatedCart);
+        return response;
     }
 
     @Override
@@ -180,10 +188,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() -> new ApiException(ProductErrorCode.CART_NOT_FOUND));
-        // check  ownerShip
-        if (!cart.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("Access denied");
-        }
+
         cart.getItems().clear();
         cartRepository.save(cart);
         System.out.println("Cart Items deleted successfully");

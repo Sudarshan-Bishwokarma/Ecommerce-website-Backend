@@ -4,6 +4,8 @@ import com.ecommerce.ecommercewebsite.dto.AddToCartRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.AddToCartResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.UpdateCartRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.UpdateCartResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.users.CartResponseDTO;
+import com.ecommerce.ecommercewebsite.model.Cart;
 import com.ecommerce.ecommercewebsite.model.User;
 
 import java.security.Principal;
@@ -12,11 +14,11 @@ import java.util.List;
 public interface UserService {
     public AddToCartResponseDTO addToCart(String email, AddToCartRequestDTO addToCartRequestDTO);
 
-    public List<AddToCartResponseDTO> getCart(User user);
+    public CartResponseDTO getCart(String email);
 
-    public UpdateCartResponseDTO updateCart(Long cartItemId, String email, UpdateCartRequestDTO updateCartRequestDTO);
+    public CartResponseDTO updateCart(Long cartItemId, String email, UpdateCartRequestDTO updateCartRequestDTO);
 
-    public String removeCartItem(Long cartItemId, Principal principal);
+    public CartResponseDTO removeCartItem(Long cartItemId, Principal principal);
 
     public String clearAllCartItems(Long cartId, Principal principal);
 }

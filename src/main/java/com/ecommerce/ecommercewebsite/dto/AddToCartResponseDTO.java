@@ -9,10 +9,11 @@ public class AddToCartResponseDTO {
     private Long cartItemId;
 
     private Long productVariantId;
-    
+
     private Long productId;
 
     private String productName;
+    private String productImage;
 
     private String size;
 
@@ -21,6 +22,7 @@ public class AddToCartResponseDTO {
     private BigDecimal productPrice;
 
     private Integer quantity;
+    private Integer availableStock;
 
-    private BigDecimal totalPrice;
+    private BigDecimal totalPrice;  // total  of each cart item
 }
