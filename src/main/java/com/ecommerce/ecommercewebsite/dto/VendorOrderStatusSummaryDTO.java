@@ -9,4 +9,5 @@ public class VendorOrderStatusSummaryDTO {
     private Long delivered;
     private Long paid;
     private Long shipped;
+    private Long processing;
 }

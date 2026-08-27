@@ -10,10 +10,11 @@ import java.util.List;
 @Data
 public class OrderResponseDTO {
     private Long orderId;
+    private String orderNumber;
     private OrderStatus status;
     private BigDecimal totalAmount;
     private LocalDateTime createdAt;
-
     private List<CustomerVendorOrderResponseDTO> vendorOrders;
+    private PaymentResponseDTO payment;
 }
-    
+

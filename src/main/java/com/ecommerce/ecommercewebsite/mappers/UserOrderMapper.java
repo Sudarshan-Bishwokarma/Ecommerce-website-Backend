@@ -16,6 +16,7 @@ public class UserOrderMapper {
     public OrderResponseDTO mapToDTO(Order order) {
         OrderResponseDTO orderResponseDTO = new OrderResponseDTO();
         orderResponseDTO.setOrderId(order.getId());
+        orderResponseDTO.setOrderNumber(order.getOrderNumber());
         orderResponseDTO.setStatus(order.getStatus());
         orderResponseDTO.setTotalAmount(order.getTotalAmount());
         orderResponseDTO.setCreatedAt(order.getCreatedAt());
@@ -26,6 +27,7 @@ public class UserOrderMapper {
             vendorOrderResponseDTO.setVendorOrderId(vendorOrder.getId());
             vendorOrderResponseDTO.setVendorId(vendorOrder.getVendor().getId());
             vendorOrderResponseDTO.setVendorName(vendorOrder.getVendor().getName());
+            vendorOrderResponseDTO.setStatus(vendorOrder.getStatus());
             vendorOrderResponseDTO.setTotalAmount(vendorOrder.getTotalAmount());
 
             List<OrderItemResponseDTO> orderItemResponseDTOs = new ArrayList<>();

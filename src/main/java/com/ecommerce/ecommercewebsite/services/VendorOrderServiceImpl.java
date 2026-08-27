@@ -92,7 +92,7 @@ public class VendorOrderServiceImpl implements VendorOrderService {
     public UpdateVendorOrderStatusResponseDTO cancelOrder(String email, Long vendorOrderId) {
         User vendor = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.VENDOR_NOT_FOUND));
         VendorOrder vendorOrder = vendorOrderRepository.findByIdAndVendor(vendorOrderId, vendor).orElseThrow(() -> new ApiException(ProductErrorCode.VENDOR_ORDER_NOT_FOUND));
-        vendorOrder.setStatus(OrderStatus.CANCELED);
+        vendorOrder.setStatus(OrderStatus.CANCELLED);
         VendorOrder savedVendorOrder = vendorOrderRepository.save(vendorOrder);
         UpdateVendorOrderStatusResponseDTO responseDTO = new UpdateVendorOrderStatusResponseDTO();
         responseDTO.setVendorOrderId(savedVendorOrder.getId());
@@ -104,17 +104,19 @@ public class VendorOrderServiceImpl implements VendorOrderService {
     @Override
     public VendorOrderStatusSummaryDTO getOrderStatusSummary(String email) {
         User vendor = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
-        Long pending = vendorOrderRepository.countByVendorAndStatus(vendor, OrderStatus.PENDING);
-        Long cancelled = vendorOrderRepository.countByVendorAndStatus(vendor, OrderStatus.CANCELED);
+        Long pending = vendorOrderRepository.countByVendorAndStatus(vendor, OrderStatus.PENDING_PAYMENT);
+        Long cancelled = vendorOrderRepository.countByVendorAndStatus(vendor, OrderStatus.CANCELLED);
         Long delivered = vendorOrderRepository.countByVendorAndStatus(vendor, OrderStatus.DELIVERED);
         Long paid = vendorOrderRepository.countByVendorAndStatus(vendor, OrderStatus.PAID);
         Long shipped = vendorOrderRepository.countByVendorAndStatus(vendor, OrderStatus.SHIPPED);
+        Long processing = vendorOrderRepository.countByVendorAndStatus(vendor, OrderStatus.PROCESSING);
         VendorOrderStatusSummaryDTO responseDTO = new VendorOrderStatusSummaryDTO();
         responseDTO.setPending(pending);
         responseDTO.setCancelled(cancelled);
         responseDTO.setDelivered(delivered);
         responseDTO.setPaid(paid);
         responseDTO.setShipped(shipped);
+        responseDTO.setProcessing(processing);
         return responseDTO;
     }
 

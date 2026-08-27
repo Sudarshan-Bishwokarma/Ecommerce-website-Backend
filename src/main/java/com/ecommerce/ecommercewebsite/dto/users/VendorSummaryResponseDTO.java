@@ -6,9 +6,17 @@ import lombok.Data;
 public class VendorSummaryResponseDTO {
     private Long vendorId;
 
-    private String storeName;
+    private String businessName;
 
-    private String districtName;
+    private String businessAddress;
+
+    private String businessDescription;
+
+    private String businessPhone;
+
+    private String businessEmail;
+
+    private String businessWebsite;
 
 
 }

@@ -36,8 +36,12 @@ public class ProductDetailMapper {
         BusinessProfile vendorProfile = vendor.getBusinessProfile();
         VendorSummaryResponseDTO vendorSummary = new VendorSummaryResponseDTO();
         vendorSummary.setVendorId(vendor.getId());
-        vendorSummary.setStoreName(vendorProfile.getBusinessName());
-        vendorSummary.setDistrictName(vendorProfile.getBusinessAddress());
+        vendorSummary.setBusinessName(vendorProfile.getBusinessName());
+        vendorSummary.setBusinessAddress(vendorProfile.getBusinessAddress());
+        vendorSummary.setBusinessDescription(vendorProfile.getBusinessDescription());
+        vendorSummary.setBusinessPhone(vendorProfile.getBusinessPhone());
+        vendorSummary.setBusinessEmail(vendorProfile.getBusinessEmail());
+        vendorSummary.setBusinessWebsite(vendorProfile.getBusinessWebsite());
         dto.setVendor(vendorSummary);
         // mapping variant details
         List<ProductVariantDetailResponseDTO> variantDetails = new ArrayList<>();

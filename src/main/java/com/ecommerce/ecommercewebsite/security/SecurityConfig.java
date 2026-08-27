@@ -52,7 +52,10 @@ public class SecurityConfig {
                                 "/api/featured-products/**",
                                 "/api/latest-products/**",
                                 "/api/vendor/featured-payment/success",
-                                "/api/vendor/featured-payment/failure"
+                                "/api/vendor/featured-payment/failure",
+                                "/api/user/order-payment/success",
+                                "/api/user/order-payment/failure"
+
                         ).permitAll()
 
                         .requestMatchers("/oauth2/**").permitAll()

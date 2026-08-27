@@ -1,5 +1,6 @@
 package com.ecommerce.ecommercewebsite.dto;
 
+import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ public class CustomerVendorOrderResponseDTO {
     private Long vendorId;
 
     private String vendorName;
+    private OrderStatus status;
 
     private BigDecimal totalAmount;
 

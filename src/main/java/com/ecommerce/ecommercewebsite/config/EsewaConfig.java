@@ -15,9 +15,16 @@ public class EsewaConfig {
 
     @Value("${esewa.payment-url}")
     private String paymentUrl;
-    @Value("${esewa.success-url}")
-    private String successUrl;
-    @Value("${esewa.failure-url}")
-    private String failureUrl;
+    @Value("${esewa.vendor-success-url}")
+    private String vendorSuccessUrl;
+
+    @Value("${esewa.vendor-failure-url}")
+    private String vendorFailureUrl;
+
+    @Value("${esewa.order-success-url}")
+    private String orderSuccessUrl;
+
+    @Value("${esewa.order-failure-url}")
+    private String orderFailureUrl;
 }
 // @Value is used to inject values from external configuration files into Java fields.

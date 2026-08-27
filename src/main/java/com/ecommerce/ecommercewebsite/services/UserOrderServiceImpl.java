@@ -2,29 +2,26 @@ package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.OrderRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.PaymentResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
+import com.ecommerce.ecommercewebsite.enums.PaymentMethod;
 import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
 import com.ecommerce.ecommercewebsite.exception.*;
 import com.ecommerce.ecommercewebsite.mappers.UserOrderMapper;
 import com.ecommerce.ecommercewebsite.model.*;
-import com.ecommerce.ecommercewebsite.repositories.CartRepository;
-import com.ecommerce.ecommercewebsite.repositories.OrderRepository;
-import com.ecommerce.ecommercewebsite.repositories.ProductRepository;
-import com.ecommerce.ecommercewebsite.repositories.UserRepository;
+import com.ecommerce.ecommercewebsite.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class UserOrderServiceImpl implements UserOrderService {
@@ -38,7 +35,12 @@ public class UserOrderServiceImpl implements UserOrderService {
     CartRepository cartRepository;
     @Autowired
     UserOrderMapper orderMapper;
+    @Autowired
+    private DistrictRepository districtRepository;
+    @Autowired
+    private OrderPaymentService orderPaymentService;
 
+    @Transactional
     @Override
     public OrderResponseDTO placeOrder(String email, OrderRequestDTO orderRequestDTO) {
         User user = userRepository.findByEmail(email)
@@ -51,12 +53,26 @@ public class UserOrderServiceImpl implements UserOrderService {
         }
         Order order = new Order();
         order.setCustomer(user);
-        order.setStatus(OrderStatus.PENDING);
+        if (orderRequestDTO.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY) {
+
+            order.setStatus(OrderStatus.PROCESSING);
+
+        } else {
+
+            order.setStatus(OrderStatus.PENDING_PAYMENT);
+
+        }
+        order.setFullName(orderRequestDTO.getFullName());
+        order.setPhoneNumber(orderRequestDTO.getPhoneNumber());
+        District district = districtRepository.findById(orderRequestDTO.getDistrictId()).orElseThrow(() -> new ApiException(ProductErrorCode.DISTRICT_NOT_FOUND));
+        order.setDistrict(district);
+        order.setMunicipality(orderRequestDTO.getMunicipality());
+        order.setStreetArea(orderRequestDTO.getStreetArea());
+        order.setLandmark(orderRequestDTO.getLandmark());
         order.setCreatedAt(LocalDateTime.now());
-        order.setShippingAddress(orderRequestDTO.getShippingAddress());
         order.setPaymentMethod(orderRequestDTO.getPaymentMethod());
         order.setNotes(orderRequestDTO.getNotes());
-        Map<User, List<CartItem>> vendorCartItems = new HashMap<>();
+        Map<User, List<CartItem>> vendorCartItems = new HashMap<>();  // separate cart items based
         for (CartItem cartItem : cart.getItems()) {
             User getVendor = cartItem.getProduct().getVendor();
             vendorCartItems.computeIfAbsent(getVendor, k -> new ArrayList<>()).add(cartItem);
@@ -74,24 +90,54 @@ public class UserOrderServiceImpl implements UserOrderService {
 
             vendorOrder.setOrder(order);
             vendorOrder.setVendor(vendor);
-            vendorOrder.setStatus(OrderStatus.PENDING);
+            if (orderRequestDTO.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY) {
+                vendorOrder.setStatus(OrderStatus.PROCESSING);
+            } else {
+                vendorOrder.setStatus(OrderStatus.PENDING_PAYMENT);
+            }
+            vendorOrder.setCreatedAt(LocalDateTime.now());
             List<OrderItem> orderItems = new ArrayList<>();
             BigDecimal price;
             BigDecimal vendorTotalAmount = BigDecimal.ZERO;
             for (CartItem cartItem : cartItems) {
 
+                ProductVariant variant = cartItem.getProductVariant();
+                if (variant != null) {
+                    if (variant.getStock() < cartItem.getQuantity()) {
+                        throw new ApiException(
+                                ProductErrorCode.INSUFFICIENT_STOCK_AVAILABLE
+                        );
+                    }
+                    if (orderRequestDTO.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY) {
+                        variant.setStock(variant.getStock() - cartItem.getQuantity());
+                    }
+                } else {
+                    Product product = cartItem.getProduct();
+
+                    if (product.getStock() < cartItem.getQuantity()) {
+                        throw new ApiException(ProductErrorCode.INSUFFICIENT_STOCK_AVAILABLE);
+                    }
+
+                    if (orderRequestDTO.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY) {
+                        product.setStock(product.getStock() - cartItem.getQuantity());
+                    }
+                }
                 OrderItem orderItem = new OrderItem();
 
                 orderItem.setVendorOrder(vendorOrder);
 
                 orderItem.setProduct(cartItem.getProduct());
-
+                orderItem.setProductVariant(cartItem.getProductVariant());
                 orderItem.setQuantity(cartItem.getQuantity());
-
+                orderItem.setProductName(cartItem.getProduct().getProductName());
                 if (cartItem.getProductVariant() != null) {
                     price = cartItem.getProductVariant().getPrice();
+                    orderItem.setSize(cartItem.getProductVariant().getSize());
+                    orderItem.setColor(cartItem.getProductVariant().getColor());
                 } else {
                     price = cartItem.getProduct().getPrice();
+                    orderItem.setSize(null);
+                    orderItem.setColor(null);
                 }
                 orderItem.setPriceAtPurchase(price);
                 BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
@@ -101,11 +147,6 @@ public class UserOrderServiceImpl implements UserOrderService {
             }
             vendorOrder.setOrderItems(orderItems);
             vendorOrder.setTotalAmount(vendorTotalAmount);
-            BigDecimal commissionRate = new BigDecimal("0.10");
-            BigDecimal commissionAmount = vendorTotalAmount.multiply(commissionRate);
-            BigDecimal vendorEarning = vendorTotalAmount.subtract(commissionAmount);
-            vendorOrder.setCommissionAmount(commissionAmount);
-            vendorOrder.setVendorEarning(vendorEarning);
             vendorOrders.add(vendorOrder);
             orderTotalAmount = orderTotalAmount.add(vendorTotalAmount);
 
@@ -114,11 +155,29 @@ public class UserOrderServiceImpl implements UserOrderService {
         order.setTotalAmount(orderTotalAmount);
         order.setVendorOrders(vendorOrders);
         Order savedOrder = orderRepository.save(order);
-        cart.getItems().clear();
-        cartRepository.save(cart);
         OrderResponseDTO orderResponseDTO = orderMapper.mapToDTO(savedOrder);
-        return orderResponseDTO;
+        if (orderRequestDTO.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY) {
 
+            cart.getItems().clear();
+            cartRepository.save(cart);
+
+            orderResponseDTO.setPayment(null);
+
+        } else {
+            String transactionUuid = "ORDER-" + UUID.randomUUID();
+
+            savedOrder.setTransactionUuid(transactionUuid);
+            String orderNumber = "ORD-" + savedOrder.getId();
+
+            savedOrder.setOrderNumber(orderNumber);
+            orderRepository.save(savedOrder);
+            orderRepository.save(savedOrder);
+            PaymentResponseDTO paymentResponse = orderPaymentService.initiatePayment(savedOrder.getId(), orderRequestDTO.getPaymentMethod());
+
+            orderResponseDTO.setPayment(paymentResponse);
+        }
+
+        return orderResponseDTO;
 
     }
 
@@ -138,8 +197,9 @@ public class UserOrderServiceImpl implements UserOrderService {
         if (!order.getCustomer().getEmail().equals(email)) {
             throw new AccessDeniedException("Access Denied");
         }
-        order.setStatus(OrderStatus.CANCELED);
+        order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
+
         return " Order has been cancelled";
     }
 

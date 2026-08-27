@@ -1,6 +1,7 @@
 package com.ecommerce.ecommercewebsite.model;
 
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
+import com.ecommerce.ecommercewebsite.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,16 +21,30 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String OrderNumber;
+    private String orderNumber;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false) //This field is required
     private User customer;
+    // delivery Information
+    private String fullName;
+    private String phoneNumber;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "district_id", nullable = false)
+    private District district;
+    private String municipality;
+
+    private String streetArea;
+
+    private String landmark;
     private BigDecimal totalAmount;
     @Enumerated(EnumType.STRING)
-    private OrderStatus status;  // PENDING, PAID, SHIPPED, DELIVERED, CANCELLED
+    private OrderStatus status = OrderStatus.PENDING_PAYMENT;
     private LocalDateTime createdAt;
-    private String shippingAddress;
-    private String paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod;
+    private String transactionUuid;
     private String notes;
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VendorOrder> vendorOrders = new ArrayList<>();

@@ -17,7 +17,7 @@ public class VendorOrderMapper {
         vendorOrderResponseDTO.setOrderId(vendorOrder.getOrder().getId());
         vendorOrderResponseDTO.setCustomerName(vendorOrder.getOrder().getCustomer().getName());
         vendorOrderResponseDTO.setCustomerEmail(vendorOrder.getOrder().getCustomer().getEmail());
-        vendorOrderResponseDTO.setShippingAddress(vendorOrder.getOrder().getShippingAddress());
+        
         vendorOrderResponseDTO.setStatus(vendorOrder.getStatus());
         vendorOrderResponseDTO.setCreatedAt(vendorOrder.getOrder().getCreatedAt());
         vendorOrderResponseDTO.setTotalAmount(vendorOrder.getTotalAmount());

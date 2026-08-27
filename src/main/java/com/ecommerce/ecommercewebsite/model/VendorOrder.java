@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +29,8 @@ public class VendorOrder {
     @JoinColumn(name = "vendor_id", nullable = false)
     private User vendor;
     @Enumerated(EnumType.STRING)
-    private OrderStatus status;
+    private OrderStatus status = OrderStatus.PENDING_PAYMENT;
+    private LocalDateTime createdAt;
     private BigDecimal totalAmount;
     // platform commission
     private BigDecimal commissionAmount;

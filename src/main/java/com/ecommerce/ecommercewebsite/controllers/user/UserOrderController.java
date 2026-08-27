@@ -17,7 +17,7 @@ public class UserOrderController {
     @Autowired
     private UserOrderService orderService;
 
-    @PostMapping("/create")
+    @PostMapping("/place")
     public ResponseEntity<ApiResponse<OrderResponseDTO>> createOrder(
             @RequestBody OrderRequestDTO orderRequestDTO,
             @AuthenticationPrincipal UserDetails userDetails) {

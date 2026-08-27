@@ -11,9 +11,12 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByCustomer(User customer, Pageable pageable);
+
+    Optional<Order> findByTransactionUuid(String transactionUuid);
 
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 

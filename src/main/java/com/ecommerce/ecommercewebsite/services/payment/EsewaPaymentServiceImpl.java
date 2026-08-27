@@ -8,6 +8,7 @@ import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.model.FeaturedPlan;
 import com.ecommerce.ecommercewebsite.model.FeaturedRequest;
+import com.ecommerce.ecommercewebsite.model.Order;
 import com.ecommerce.ecommercewebsite.repositories.FeaturedRequestRepository;
 import com.ecommerce.ecommercewebsite.utils.EsewaSignatureUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,8 +62,8 @@ public class EsewaPaymentServiceImpl implements EsewaPaymentService {
         esewaRequest.setProduct_service_charge(BigDecimal.ZERO);
         esewaRequest.setProduct_delivery_charge(BigDecimal.ZERO);
 
-        esewaRequest.setSuccess_url(esewaConfig.getSuccessUrl());
-        esewaRequest.setFailure_url(esewaConfig.getFailureUrl());
+        esewaRequest.setSuccess_url(esewaConfig.getVendorSuccessUrl());
+        esewaRequest.setFailure_url(esewaConfig.getVendorFailureUrl());
 
         esewaRequest.setSigned_field_names("total_amount,transaction_uuid,product_code");
 
@@ -110,5 +111,41 @@ public class EsewaPaymentServiceImpl implements EsewaPaymentService {
             throw new RuntimeException("Invalid eSewa response");
 
         }
+    }
+
+    @Override
+    public PaymentResponseDTO createOrderPayment(Order order) {
+        BigDecimal totalAmount = order.getTotalAmount().setScale(2, RoundingMode.HALF_UP);
+
+        String transactionUuid = order.getTransactionUuid();
+        order.setTransactionUuid(transactionUuid);
+        String signature = EsewaSignatureUtil.generateSignature(
+                totalAmount.toPlainString(),
+                transactionUuid,
+                esewaConfig.getProductCode(),
+                esewaConfig.getSecretKey()
+        );
+        EsewaPaymentRequestDTO esewaRequest = new EsewaPaymentRequestDTO();
+
+        esewaRequest.setAmount(totalAmount);
+        esewaRequest.setTax_amount(BigDecimal.ZERO);
+        esewaRequest.setTotal_amount(totalAmount);
+        esewaRequest.setTransaction_uuid(transactionUuid);
+        esewaRequest.setProduct_code(esewaConfig.getProductCode());
+        esewaRequest.setProduct_service_charge(BigDecimal.ZERO);
+        esewaRequest.setProduct_delivery_charge(BigDecimal.ZERO);
+        esewaRequest.setSuccess_url(esewaConfig.getOrderSuccessUrl());
+        esewaRequest.setFailure_url(esewaConfig.getOrderFailureUrl());
+        esewaRequest.setSigned_field_names(
+                "total_amount,transaction_uuid,product_code"
+        );
+        esewaRequest.setSignature(signature);
+        PaymentResponseDTO response = new PaymentResponseDTO();
+        response.setTransactionId(transactionUuid);
+        response.setAmount(totalAmount);
+        response.setPaymentUrl(esewaConfig.getPaymentUrl());
+        response.setPaymentData(esewaRequest);
+
+        return response;
     }
 }
