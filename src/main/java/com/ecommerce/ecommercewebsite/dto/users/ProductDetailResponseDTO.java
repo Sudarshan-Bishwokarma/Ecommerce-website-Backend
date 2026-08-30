@@ -21,8 +21,6 @@ public class ProductDetailResponseDTO {
     private String categoryName;
 
     private String districtName;
-
-
     // vendor information
     private VendorSummaryResponseDTO vendor;
 

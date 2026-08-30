@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -182,12 +183,39 @@ public class UserOrderServiceImpl implements UserOrderService {
     }
 
     @Override
-    public Page<OrderResponseDTO> getUsersOrders(String email, int page, int size) {
+    public Page<OrderResponseDTO> getUsersOrders(String email, String sort, OrderStatus status, int page, int size) {
         User user = userRepository.findByEmail(email).
                 orElseThrow(() -> new UserNotFoundException("User not found"));
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Order> orderPage = orderRepository.findByCustomer(user, pageable);
-        return orderPage.map(orderMapper::mapToDTO);
+        Pageable pageable;
+        if (sort != null) {
+            switch (sort) {
+                case "oldest":
+                    pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
+                    break;
+                case "newest":
+                    pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+                    break;
+                case "low":
+                    pageable = PageRequest.of(page, size, Sort.by("totalAmount").ascending());
+                    break;
+                case "high":
+                    pageable = PageRequest.of(page, size, Sort.by("totalAmount").descending());
+                    break;
+                default:
+                    pageable = PageRequest.of(page, size);
+            }
+        } else {
+            pageable = PageRequest.of(page, size);
+        }
+        Page<Order> allOrders;
+        if (status != null) {
+            allOrders = orderRepository.findByCustomerAndStatus(user, status, pageable);
+        } else {
+            allOrders = orderRepository.findByCustomer(user, pageable);
+        }
+
+
+        return allOrders.map(orderMapper::mapToDTO);
     }
 
     @Override

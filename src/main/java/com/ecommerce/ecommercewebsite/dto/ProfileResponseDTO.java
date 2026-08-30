@@ -1,5 +1,6 @@
 package com.ecommerce.ecommercewebsite.dto;
 
+import com.ecommerce.ecommercewebsite.enums.ProfileStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,5 +16,7 @@ public class ProfileResponseDTO {
     private String number;
     private String country;
     private String profileImageBase64;
+    private ProfileStatus profileStatus;
+
 }
 

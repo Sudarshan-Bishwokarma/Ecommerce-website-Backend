@@ -43,12 +43,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/api/auth/login",
+                                "/api/auth/signup",
+                                "/api/auth/verify-otp",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
                                 "/api/all-districts",
                                 "/api/all-categories",
                                 "/api/sort-products/**",
                                 "/api/product/**",
                                 "/api/products/**",
+                                "/api/all-products/**",
                                 "/api/featured-products/**",
                                 "/api/latest-products/**",
                                 "/api/vendor/featured-payment/success",
@@ -62,7 +67,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/vendor/**").hasAuthority("ROLE_VENDOR")
                         .requestMatchers("/api/super-admin/**").hasAuthority("ROLE_SUPER_ADMIN")
-                        .requestMatchers("/api/super-admin/**").hasAuthority("ROLE_USER")
+                        .requestMatchers("/api/user/**").hasAuthority("ROLE_USER")
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth

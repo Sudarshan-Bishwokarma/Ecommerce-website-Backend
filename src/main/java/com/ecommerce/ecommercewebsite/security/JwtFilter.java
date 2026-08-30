@@ -26,7 +26,13 @@ public class JwtFilter extends OncePerRequestFilter {
 
     // PUBLIC endpoints (NO JWT REQUIRED)
     private static final List<String> PUBLIC_URLS = List.of(
-            "/api/auth/",
+            "/api/auth/login",
+            "/api/auth/register",
+            "/api/auth/verify-otp",
+            "/api/auth/resend-otp",
+            "/api/auth/forget-password",
+            "/api/auth/reset-password",
+
             "/api/all-districts",
             "/api/all-categories",
             "/api/sort-products/",

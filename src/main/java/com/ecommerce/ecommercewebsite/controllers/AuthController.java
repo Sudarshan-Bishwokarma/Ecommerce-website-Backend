@@ -54,11 +54,11 @@ public class AuthController {
         return ResponseEntity.ok(apiResponse);
     }
 
-    @PostMapping("/change-password")
+    @PutMapping("/change-password")
     public ResponseEntity<ApiResponse<String>> changePassword(@Valid @RequestBody ChangePasswordDTO request, Principal principal) {
         String email = principal.getName();
         String result = authService.changePassword(email, request);
-        ApiResponse<String> response = new ApiResponse<>("Success", result);
+        ApiResponse<String> response = new ApiResponse<>("Password Changed Successfully", result);
         return ResponseEntity.ok(response);
     }
 

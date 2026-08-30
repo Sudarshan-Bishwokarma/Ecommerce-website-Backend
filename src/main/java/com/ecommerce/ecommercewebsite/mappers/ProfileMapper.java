@@ -15,12 +15,14 @@ public class ProfileMapper {
         profileResponseDTO.setId(user.getId());
         profileResponseDTO.setName(user.getName());
         profileResponseDTO.setEmail(user.getEmail());
+        profileResponseDTO.setNumber(profile.getNumber());
         profileResponseDTO.setCity(profile.getCity());
         profileResponseDTO.setCountry(profile.getCountry());
         if (profile.getProfileImage() != null) {
             String base64 = Base64.getEncoder().encodeToString(profile.getProfileImage());
             profileResponseDTO.setProfileImageBase64(base64);
         }
+        profileResponseDTO.setProfileStatus(profile.getProfileStatus());
         return profileResponseDTO;
     }
 }

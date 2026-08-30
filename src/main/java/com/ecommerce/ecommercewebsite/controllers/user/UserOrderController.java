@@ -2,6 +2,7 @@ package com.ecommerce.ecommercewebsite.controllers.user;
 
 import com.ecommerce.ecommercewebsite.dto.OrderRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;
+import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.UserOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +38,12 @@ public class UserOrderController {
     public ResponseEntity<ApiResponse<Page<OrderResponseDTO>>> GetMyOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) OrderStatus status,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         String email = userDetails.getUsername();
-        Page<OrderResponseDTO> responseDTOS = orderService.getUsersOrders(email, page, size);
+        Page<OrderResponseDTO> responseDTOS = orderService.getUsersOrders(email, sort, status, page, size);
         ApiResponse<Page<OrderResponseDTO>> response = new ApiResponse<>("Orders  fetched successfully", responseDTOS);
         return ResponseEntity.ok(response);
 

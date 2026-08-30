@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,11 +38,15 @@ public class ProductController {
 
 
     @GetMapping("/all-products")
-    public ResponseEntity<ApiResponse<Page<ProductResponseDTO>>> getAllProducts(
+    public ResponseEntity<ApiResponse<Page<ProductResponseDTO>>> getProducts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long districtId,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String sortType
     ) {
-        Page<ProductResponseDTO> allProducts = productService.getAllProducts(page, size);
+        Page<ProductResponseDTO> allProducts = productService.getProducts(districtId, categoryId, search, sortType, page, size);
         ApiResponse<Page<ProductResponseDTO>> apiResponse = new ApiResponse<>("Products Fetched Successfully", allProducts);
         return ResponseEntity.ok(apiResponse);
     }

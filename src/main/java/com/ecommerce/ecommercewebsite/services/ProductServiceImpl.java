@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -40,11 +41,49 @@ public class ProductServiceImpl implements ProductService {
     private ProductDetailMapper productDetailMapper;
 
     @Override
-    public Page<ProductResponseDTO> getAllProducts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Product> allProducts = productRepository.findAll(pageable);
-        return allProducts.map(mapper::mapToDTO);
+    public Page<ProductResponseDTO> getProducts(Long districtId, Long categoryId, String search, String sortType, int page, int size) {
+        Pageable pageable;
+        if (sortType != null) {
+            switch (sortType) {
+                case "priceAsc":
+                    pageable = PageRequest.of(page, size, Sort.by("displayPrice").ascending());
+                    break;
+                case "priceDesc":
+                    pageable = PageRequest.of(page, size, Sort.by("displayPrice").descending());
+                    break;
+                case "nameAsc":
+                    pageable = PageRequest.of(page, size, Sort.by("productName").ascending());
+                    break;
+                case "nameDesc":
+                    pageable = PageRequest.of(page, size, Sort.by("productName").descending());
+                    break;
+                default:
+                    pageable = PageRequest.of(page, size);
+            }
 
+        } else {
+            pageable = PageRequest.of(page, size);
+        }
+        Page<Product> allProducts;
+        if (districtId != null && categoryId != null && search != null) {
+            allProducts = productRepository.findByDistrict_IdAndCategory_IdAndProductNameContainingIgnoreCase(districtId, categoryId, search, pageable);
+        } else if (districtId != null && categoryId != null) {
+            allProducts = productRepository.findByDistrict_IdAndCategory_Id(districtId, categoryId, pageable);
+        } else if (districtId != null && search != null) {
+            allProducts = productRepository.findByDistrict_IdAndProductNameContainingIgnoreCase(districtId, search, pageable);
+        } else if (categoryId != null && search != null) {
+            allProducts = productRepository.findByCategory_IdAndProductNameContainingIgnoreCase(categoryId, search, pageable);
+        } else if (districtId != null) {
+            allProducts = productRepository.findByDistrict_id(districtId, pageable);
+        } else if (categoryId != null) {
+            allProducts = productRepository.findByCategory_id(categoryId, pageable);
+        } else if (search != null && !search.trim().isEmpty()) {
+            allProducts = productRepository.findByProductNameContainingIgnoreCase(search, pageable);
+        } else {
+            allProducts = productRepository.findAll(pageable);
+        }
+
+        return allProducts.map(mapper::mapToDTO);
     }
 
     @Override

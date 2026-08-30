@@ -30,5 +30,4 @@ public class ProfileController {
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
-
 }

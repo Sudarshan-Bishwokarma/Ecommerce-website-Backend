@@ -3,6 +3,7 @@ package com.ecommerce.ecommercewebsite.services;
 import com.ecommerce.ecommercewebsite.dto.ProductRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.ProfileRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.ProfileResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.users.UserProfileUpdateRequestDTO;
 import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
 import com.ecommerce.ecommercewebsite.enums.ProfileStatus;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
@@ -52,6 +53,45 @@ public class ProfileServiceImpl implements ProfileService {
         }
         profile.setProfileStatus(ProfileStatus.COMPLETED);
         profileRepository.save(profile);
+        ProfileResponseDTO responseDTO = mapper.map(profile);
+        return responseDTO;
+    }
+
+    @Override
+    public ProfileResponseDTO getProfile(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
+        Profile profile = profileRepository.findByUser(user).orElse(null);
+        if (profile == null) {
+            ProfileResponseDTO responseDTO = new ProfileResponseDTO();
+            responseDTO.setId(user.getId());
+            responseDTO.setName(user.getName());
+            responseDTO.setEmail(user.getEmail());
+            responseDTO.setProfileStatus(ProfileStatus.PENDING);
+            return responseDTO;
+
+        } else {
+            ProfileResponseDTO responseDTO = mapper.map(profile);
+            return responseDTO;
+        }
+
+    }
+
+    @Override
+    public ProfileResponseDTO editProfile(String email, UserProfileUpdateRequestDTO updateRequestDTO) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
+        Profile profile = profileRepository.findByUser(user).orElseThrow(() -> new ApiException(AuthErrorCode.PROFILE_NOT_FOUND));
+        user.setName(updateRequestDTO.getName());
+        User savedUser = userRepository.save(user);
+        profile.setNumber(updateRequestDTO.getNumber());
+        profile.setCity(updateRequestDTO.getCity());
+        profile.setCountry(updateRequestDTO.getCountry());
+        if (updateRequestDTO.getProfile() != null) {
+            try {
+                profile.setProfileImage(updateRequestDTO.getProfile().getBytes());
+            } catch (Exception e) {
+                throw new ApiException(AuthErrorCode.PROFILE_UPLOAD_FAILURE);
+            }
+        }
         ProfileResponseDTO responseDTO = mapper.map(profile);
         return responseDTO;
     }
