@@ -62,5 +62,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findTop8ByOrderByProductIdDesc();
 
     List<Product> findTop8ByStatusOrderByProductIdDesc(ProductStatus status);
+
+    Long countByStatus(ProductStatus status);
 }
 

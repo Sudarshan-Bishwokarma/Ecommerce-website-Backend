@@ -116,9 +116,8 @@ public class EsewaPaymentServiceImpl implements EsewaPaymentService {
     @Override
     public PaymentResponseDTO createOrderPayment(Order order) {
         BigDecimal totalAmount = order.getTotalAmount().setScale(2, RoundingMode.HALF_UP);
+        String transactionUuid = "ORDER-" + order.getId() + "-" + System.currentTimeMillis();
 
-        String transactionUuid = order.getTransactionUuid();
-        order.setTransactionUuid(transactionUuid);
         String signature = EsewaSignatureUtil.generateSignature(
                 totalAmount.toPlainString(),
                 transactionUuid,

@@ -6,6 +6,7 @@ import com.ecommerce.ecommercewebsite.enums.*;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.model.*;
 import com.ecommerce.ecommercewebsite.repositories.CartRepository;
+import com.ecommerce.ecommercewebsite.repositories.OrderPaymentRepository;
 import com.ecommerce.ecommercewebsite.repositories.OrderRepository;
 import com.ecommerce.ecommercewebsite.services.payment.EsewaPaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Service
 public class OrderPaymentServiceImpl implements OrderPaymentService {
@@ -24,15 +26,29 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     private CartRepository cartRepository;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private OrderPaymentRepository orderPaymentRepository;
 
     @Override
     public PaymentResponseDTO initiatePayment(Long orderId, PaymentMethod paymentMethod) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ApiException(OrderErrorCode.ORDER_NOT_FOUND));
+
         if (paymentMethod == PaymentMethod.CASH_ON_DELIVERY) {
             throw new ApiException(PaymentErrorCode.INVALID_PAYMENT_METHOD);
         }
+        OrderPayment orderPayment = new OrderPayment();
+        orderPayment.setOrder(order);
+        orderPayment.setAmount(order.getTotalAmount());
+        orderPayment.setPaymentMethod(paymentMethod);
+        orderPayment.setStatus(PaymentStatus.PENDING);
+
+        orderPaymentRepository.save(orderPayment);
+
         if (paymentMethod == PaymentMethod.ESEWA) {
             PaymentResponseDTO response = esewaPaymentService.createOrderPayment(order);
+
+            orderPayment.setTransactionUuid(response.getTransactionId());
+            orderPaymentRepository.save(orderPayment);
             return response;
 
 
@@ -47,7 +63,10 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     @Transactional
     @Override
     public String handlePaymentSuccess(String transactionUuid) {
-        Order order = orderRepository.findByTransactionUuid(transactionUuid).orElseThrow(() -> new ApiException(OrderErrorCode.ORDER_NOT_FOUND));
+        OrderPayment orderPayment = orderPaymentRepository.findByTransactionUuid(transactionUuid)
+                .orElseThrow(() -> new ApiException(PaymentErrorCode.PAYMENT_NOT_FOUND));
+
+        Order order = orderPayment.getOrder();
         if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
             throw new ApiException(PaymentErrorCode.PAYMENT_NOT_ALLOWED);
         }
@@ -89,8 +108,12 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
             BigDecimal vendorEarning = vendorOrder.getTotalAmount().subtract(commissionAmount);
             vendorOrder.setCommissionAmount(commissionAmount);
             vendorOrder.setVendorEarning(vendorEarning);
+            vendorOrder.setStatus(OrderStatus.PAID);
 
         }
+        orderPayment.setStatus(PaymentStatus.SUCCESS);
+        orderPayment.setPaidAt(LocalDateTime.now());
+        orderPaymentRepository.save(orderPayment);
         order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
         //clear cart
@@ -113,7 +136,7 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
         emailDetails.setMsgBody(
                 "Hello " + order.getCustomer().getName() + ",\n\n"
                         + "Your payment has been successfully completed.\n\n"
-                        + "Order ID: " + order.getTransactionUuid() + "\n"
+                        + "Order ID: " + orderPayment.getTransactionUuid() + "\n"
                         + "Status: PAID\n\n"
                         + "Your order is now being processed.\n\n"
                         + "Thank you for shopping with LocalConnect."
@@ -128,13 +151,11 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     @Transactional
     public String handlePaymentFailure(String transactionUuid) {
 
-        Order order = orderRepository
+        OrderPayment orderPayment = orderPaymentRepository
                 .findByTransactionUuid(transactionUuid)
-                .orElseThrow(
-                        () -> new ApiException(OrderErrorCode.ORDER_NOT_FOUND)
-                );
+                .orElseThrow(() -> new ApiException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
-
+        Order order = orderPayment.getOrder();
         if (order.getStatus() == OrderStatus.PAID) {
             throw new ApiException(PaymentErrorCode.PAYMENT_ALREADY_COMPLETED);
         }

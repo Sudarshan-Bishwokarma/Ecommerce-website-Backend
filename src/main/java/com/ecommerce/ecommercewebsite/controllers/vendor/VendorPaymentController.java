@@ -44,4 +44,16 @@ public class VendorPaymentController {
                         + transactionUuid
         );
     }
+
+    @GetMapping("/featured-payment/failure")
+    public RedirectView paymentFailure(
+            @RequestParam("transactionUuid") String transactionUuid) {
+
+        paymentService.handlePaymentFailure(transactionUuid);
+
+        return new RedirectView(
+                "http://localhost:5173/vendor/payment/failed?transactionUuid="
+                        + transactionUuid
+        );
+    }
 }

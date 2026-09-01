@@ -71,7 +71,7 @@ public class UserOrderServiceImpl implements UserOrderService {
         order.setStreetArea(orderRequestDTO.getStreetArea());
         order.setLandmark(orderRequestDTO.getLandmark());
         order.setCreatedAt(LocalDateTime.now());
-        order.setPaymentMethod(orderRequestDTO.getPaymentMethod());
+
         order.setNotes(orderRequestDTO.getNotes());
         Map<User, List<CartItem>> vendorCartItems = new HashMap<>();  // separate cart items based
         for (CartItem cartItem : cart.getItems()) {
@@ -159,20 +159,19 @@ public class UserOrderServiceImpl implements UserOrderService {
         OrderResponseDTO orderResponseDTO = orderMapper.mapToDTO(savedOrder);
         if (orderRequestDTO.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY) {
 
+
             cart.getItems().clear();
             cartRepository.save(cart);
 
             orderResponseDTO.setPayment(null);
 
         } else {
-            String transactionUuid = "ORDER-" + UUID.randomUUID();
 
-            savedOrder.setTransactionUuid(transactionUuid);
             String orderNumber = "ORD-" + savedOrder.getId();
 
             savedOrder.setOrderNumber(orderNumber);
             orderRepository.save(savedOrder);
-            orderRepository.save(savedOrder);
+
             PaymentResponseDTO paymentResponse = orderPaymentService.initiatePayment(savedOrder.getId(), orderRequestDTO.getPaymentMethod());
 
             orderResponseDTO.setPayment(paymentResponse);

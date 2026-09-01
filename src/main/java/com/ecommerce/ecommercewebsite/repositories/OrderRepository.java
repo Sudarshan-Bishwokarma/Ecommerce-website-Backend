@@ -1,6 +1,7 @@
 package com.ecommerce.ecommercewebsite.repositories;
 
 import com.ecommerce.ecommercewebsite.dto.MonthlyOrderDTO;
+import com.ecommerce.ecommercewebsite.enums.ProductStatus;
 import com.ecommerce.ecommercewebsite.model.Order;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import com.ecommerce.ecommercewebsite.model.User;
@@ -14,11 +15,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
+
     Page<Order> findByCustomer(User customer, Pageable pageable);
 
     Page<Order> findByCustomerAndStatus(User customer, OrderStatus status, Pageable pageable);
-
-    Optional<Order> findByTransactionUuid(String transactionUuid);
+    
 
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
@@ -36,4 +37,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             ORDER BY MONTH(o.createdAt)
             """)
     List<MonthlyOrderDTO> getMonthlyOrders();
+
+    List<Order> findTop5ByOrderByCreatedAtDesc();
 }

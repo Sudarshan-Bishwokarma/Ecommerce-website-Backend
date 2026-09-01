@@ -1,10 +1,7 @@
 package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.*;
-import com.ecommerce.ecommercewebsite.enums.ApprovalStatus;
-import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
-import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
-import com.ecommerce.ecommercewebsite.enums.ProductStatus;
+import com.ecommerce.ecommercewebsite.enums.*;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.exception.UserNotFoundException;
 import com.ecommerce.ecommercewebsite.mappers.CategoryMapper;
@@ -23,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -48,12 +46,40 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     private ProductMapper productMapper;
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private VendorOrderRepository vendorOrderRepository;
+
+    @Autowired
+    private FeaturedPaymentRepository featuredPaymentRepository;
 
 
     @Override
     public String deleteVendor(Long id) {
         userRepository.deleteById(id);
         return "Admin Deleted Successfully";
+    }
+
+
+    @Override
+    public Long countTotalVendors() {
+        Role role = roleRepository.findByRole("ROLE_VENDOR");
+        return userRepository.countByRole(role);
+    }
+
+    @Override
+    public Long countTotalProducts() {
+        return productRepository.countByStatus(ProductStatus.ACTIVE);
+
+    }
+
+
+    @Override
+    public Long countTotalUsers() {
+        Role role = roleRepository.findByRole("ROLE_USER");
+        Long count = userRepository.countByRole(role);
+        return count;
     }
 
     @Override
@@ -169,6 +195,23 @@ public class SuperAdminServiceImpl implements SuperAdminService {
         }
         CategoryResponseDTO categoryResponseDTO = categoryMapper.mapToDTO(categoryRepository.save(category));
         return categoryResponseDTO;
+    }
+
+    @Override
+    public BigDecimal getOrderCommission() {
+        return vendorOrderRepository.getTotalCommission();
+    }
+
+    @Override
+    public BigDecimal getFeaturedRevenue() {
+        return featuredPaymentRepository.getTotalAmountByStatus(PaymentStatus.SUCCESS);
+    }
+
+    @Override
+    public BigDecimal getTotalEarnings() {
+        BigDecimal orderCommission = getOrderCommission();
+        BigDecimal featuredRevenue = getFeaturedRevenue();
+        return orderCommission.add(featuredRevenue);
     }
 
 

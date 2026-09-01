@@ -13,6 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.security.Principal;
+
 @RestController
 @RequestMapping("/api/super-admin")
 public class SuperAdminController {
@@ -28,6 +31,32 @@ public class SuperAdminController {
         String result = superAdminService.deleteVendor(id);
         return ResponseEntity.ok(result);
     }
+
+    //  get total number of  users
+    @GetMapping("/total-users/count")
+    ResponseEntity<ApiResponse<Long>> countTotalUsers() {
+
+        Long totalUsers = superAdminService.countTotalUsers();
+        ApiResponse<Long> response = new ApiResponse<>("success", totalUsers);
+        return ResponseEntity.ok(response);
+    }
+
+    // get total vendors
+    @GetMapping("/total-vendors/count")
+    public ResponseEntity<ApiResponse<Long>> countTotalVendors() {
+        Long totalVendors = superAdminService.countTotalVendors();
+        ApiResponse<Long> response = new ApiResponse<>("success", totalVendors);
+        return ResponseEntity.ok(response);
+    }
+    // get total  active products
+
+    @GetMapping("/total-products")
+    public ResponseEntity<ApiResponse<Long>> countTotalProducts() {
+        Long totalProducts = superAdminService.countTotalProducts();
+        ApiResponse<Long> response = new ApiResponse<>("success", totalProducts);
+        return ResponseEntity.ok(response);
+    }
+
 
     @GetMapping("/all-vendors")
     ResponseEntity<ApiResponse<Page<VendorResponseDTO>>> getAllVendors(
@@ -100,7 +129,7 @@ public class SuperAdminController {
         ApiResponse<String> apiResponse = new ApiResponse<>("Success", response);
         return ResponseEntity.ok(apiResponse);
     }
-    
+
     // reject  feature   product   request
     @PutMapping("/featured-request/{id}/reject")
     public ResponseEntity<ApiResponse<String>> rejectFeaturedRequest(@PathVariable Long id, @RequestBody FeaturedRequestActionDTO request
@@ -126,6 +155,39 @@ public class SuperAdminController {
         ApiResponse<CategoryResponseDTO> apiResponse = new ApiResponse<>("Success", responseDTO);
         return ResponseEntity.ok(apiResponse);
 
+    }
+
+    // Get total commission earned from orders
+    @GetMapping("/earnings/order-commission")
+    public ResponseEntity<ApiResponse<BigDecimal>> getOrderCommission() {
+
+        BigDecimal commission = superAdminService.getOrderCommission();
+
+        ApiResponse<BigDecimal> response = new ApiResponse<>("Order commission fetched successfully", commission);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Get total revenue from featured plans
+    @GetMapping("/featured-plan/revenue")
+    public ResponseEntity<ApiResponse<BigDecimal>> getFeaturedPlanRevenue() {
+
+        BigDecimal revenue = superAdminService.getFeaturedRevenue();
+
+        ApiResponse<BigDecimal> response = new ApiResponse<>("Featured plan revenue fetched successfully", revenue);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // total  earnings
+    @GetMapping("/earnings")
+    public ResponseEntity<ApiResponse<BigDecimal>> getTotalEarnings() {
+
+        BigDecimal totalEarnings = superAdminService.getTotalEarnings();
+
+        ApiResponse<BigDecimal> response = new ApiResponse<>("Total earnings fetched successfully", totalEarnings);
+
+        return ResponseEntity.ok(response);
     }
 
 
