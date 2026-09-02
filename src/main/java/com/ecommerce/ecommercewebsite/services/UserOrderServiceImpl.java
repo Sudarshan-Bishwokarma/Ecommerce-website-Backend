@@ -71,8 +71,6 @@ public class UserOrderServiceImpl implements UserOrderService {
         order.setStreetArea(orderRequestDTO.getStreetArea());
         order.setLandmark(orderRequestDTO.getLandmark());
         order.setCreatedAt(LocalDateTime.now());
-
-        order.setNotes(orderRequestDTO.getNotes());
         Map<User, List<CartItem>> vendorCartItems = new HashMap<>();  // separate cart items based
         for (CartItem cartItem : cart.getItems()) {
             User getVendor = cartItem.getProduct().getVendor();
@@ -142,6 +140,7 @@ public class UserOrderServiceImpl implements UserOrderService {
                 }
                 orderItem.setPriceAtPurchase(price);
                 BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+                orderItem.setTotalPrice(itemTotal);
                 vendorTotalAmount = vendorTotalAmount.add(itemTotal);
                 orderItems.add(orderItem);
 
@@ -201,10 +200,10 @@ public class UserOrderServiceImpl implements UserOrderService {
                     pageable = PageRequest.of(page, size, Sort.by("totalAmount").descending());
                     break;
                 default:
-                    pageable = PageRequest.of(page, size);
+                    pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             }
         } else {
-            pageable = PageRequest.of(page, size);
+            pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         }
         Page<Order> allOrders;
         if (status != null) {

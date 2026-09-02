@@ -2,11 +2,22 @@ package com.ecommerce.ecommercewebsite.services.superadmin;
 
 import com.ecommerce.ecommercewebsite.dto.superadmin.OrderStatisticsDTO;
 import com.ecommerce.ecommercewebsite.dto.superadmin.RecentOrderResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.superadmin.SuperAdminOrderDetailDTO;
+import com.ecommerce.ecommercewebsite.dto.superadmin.SuperAdminOrderResponseDTO;
+import com.ecommerce.ecommercewebsite.enums.OrderErrorCode;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
+import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
+import com.ecommerce.ecommercewebsite.exception.ApiException;
+import com.ecommerce.ecommercewebsite.mappers.SuperAdminOrderDetailMapper;
+import com.ecommerce.ecommercewebsite.mappers.SuperAdminOrderMapper;
 import com.ecommerce.ecommercewebsite.model.Order;
 import com.ecommerce.ecommercewebsite.model.VendorOrder;
 import com.ecommerce.ecommercewebsite.repositories.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +28,11 @@ import java.util.List;
 @Service
 public class SuperAdminOrderServiceImpl implements SuperAdminOrderService {
     @Autowired
+    private SuperAdminOrderMapper superAdminOrderMapper;
+    @Autowired
     private OrderRepository orderRepository;
+    @Autowired
+    private SuperAdminOrderDetailMapper superAdminOrderDetailMapper;
 
     @Override
     public Long countTotalOrders() {
@@ -78,5 +93,48 @@ public class SuperAdminOrderServiceImpl implements SuperAdminOrderService {
         return recentOrders;
     }
 
-    
+    @Override
+    public Page<SuperAdminOrderResponseDTO> getAllOrders(int page, int size, String sort, OrderStatus status) {
+        Pageable pageable;
+        if (sort != null) {
+            switch (sort) {
+                case "oldest":
+                    pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
+                    break;
+
+                case "newest":
+                    pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+                    break;
+
+                case "low":
+                    pageable = PageRequest.of(page, size, Sort.by("totalAmount").ascending());
+                    break;
+
+                case "high":
+                    pageable = PageRequest.of(page, size, Sort.by("totalAmount").descending());
+                    break;
+
+                default:
+                    pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            }
+
+        } else {
+            pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        }
+        Page<Order> allOrders;
+        if (status != null) {
+            allOrders = orderRepository.findByStatus(status, pageable);
+        } else {
+            allOrders = orderRepository.findAll(pageable);
+        }
+        return allOrders.map(superAdminOrderMapper::MapToDTO);
+    }
+
+    @Override
+    public SuperAdminOrderDetailDTO getOrderDetails(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ApiException(OrderErrorCode.ORDER_NOT_FOUND));
+        return superAdminOrderDetailMapper.mapToDTO(order);
+
+    }
+
 }
