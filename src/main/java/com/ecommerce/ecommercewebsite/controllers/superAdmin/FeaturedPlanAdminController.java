@@ -55,5 +55,29 @@ public class FeaturedPlanAdminController {
         return ResponseEntity.ok(apiResponse);
     }
 
+    // get featured plan by id
+    @GetMapping("/featured-plans/{id}")
+    public ResponseEntity<ApiResponse<FeaturedPlanResponseDTO>> getFeaturedPlanById(
+            @PathVariable Long id
+    ) {
+        FeaturedPlanResponseDTO response = featuredPlanService.getPlanById(id);
+
+        ApiResponse<FeaturedPlanResponseDTO> apiResponse = new ApiResponse<>("Featured Plan fetched successfully", response);
+
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    // delete  featured plan
+    @DeleteMapping("/featured-plans/{id}")
+    public ResponseEntity<ApiResponse<String>> deleteFeaturedPlan(
+            @PathVariable Long id
+    ) {
+        featuredPlanService.deletePlan(id);
+
+        ApiResponse<String> response = new ApiResponse<>("Featured Plan Deleted Successfully", null);
+
+        return ResponseEntity.ok(response);
+    }
+
 
 }

@@ -56,6 +56,7 @@ public class SecurityConfig {
                                 "/api/all-products/**",
                                 "/api/featured-products/**",
                                 "/api/latest-products/**",
+                                "/api/epay/login",
                                 "/api/vendor/featured-payment/success",
                                 "/api/vendor/featured-payment/failure",
                                 "/api/user/order-payment/success",

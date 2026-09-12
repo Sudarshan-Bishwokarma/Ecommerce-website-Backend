@@ -16,6 +16,10 @@ public interface FeaturedPlanService {
 
     FeaturedPlanResponseDTO updateStatus(Long featuredPlanId, boolean active);
 
+    public FeaturedPlanResponseDTO getPlanById(Long id);
+
     //vendor
     List<VendorFeaturedPlanResponseDTO> getActivePlans();
+
+    public void deletePlan(Long id);
 }

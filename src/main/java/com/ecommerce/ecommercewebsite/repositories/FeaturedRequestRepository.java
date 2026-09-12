@@ -26,5 +26,7 @@ public interface FeaturedRequestRepository extends JpaRepository<FeaturedRequest
 
     Optional<FeaturedRequest> findByTransactionUuid(String transactionUuid);
 
-    
+    boolean existsByFeaturedPlanId(Long featuredPlanId);
+
+
 }

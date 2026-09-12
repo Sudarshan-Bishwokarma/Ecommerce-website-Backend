@@ -15,21 +15,21 @@ public class CategorySetup {
     public void init() {
         if (categoryRepository.count() == 0) {
             String[] defaultCategories = {
-                    "Traditional Clothing",
+                    "Traditional Textiles & Clothing",
                     "Handicrafts",
-                    "Pashmina Products",
-                    "Wooden Crafts",
+                    "Pashmina & Wool Products",
+                    "Wood & Bamboo Crafts",
                     "Metal Crafts",
-                    "Pottery Products",
-                    "Thangka Paintings",
+                    "Pottery & Ceramics",
+                    "Thangka & Traditional Art",
                     "Jewelry & Accessories",
-                    "Souvenir Items",
-                    "Religious Items",
-                    "Traditional Instruments",
-                    "Handmade Bags",
-                    "Local Food Products",
-                    "Organic Tea & Coffee",
-                    "Natural Products"
+                    "Souvenirs & Tourist Products",
+                    "Religious & Cultural Items",
+                    "Traditional Musical Instruments",
+                    "Handmade Bags & Accessories",
+                    "Local Food & Beverages",
+                    "Agricultural Products",
+                    "Herbs, Spices & Natural Products"
             };
             for (String name : defaultCategories) {
                 Category category = new Category();

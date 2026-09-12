@@ -1,7 +1,9 @@
 package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.JwtResponseDto;
+import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
 import com.ecommerce.ecommercewebsite.enums.ProfileStatus;
+import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.model.Profile;
 import com.ecommerce.ecommercewebsite.model.Role;
 import com.ecommerce.ecommercewebsite.model.User;
@@ -26,26 +28,43 @@ public class OAuth2UserServiceImpl implements OAuth2UserService {
     @Autowired
     ProfileRepository profileRepository;
 
+
     @Override
     public JwtResponseDto processGoogleLogin(OAuth2User oAuth2User) {
-        // Extract user information from the user
+
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
-        //heck if the user  exits in the database or create a new user
-        Optional<User> OptionalUser = userRepository.findByEmail(email);
+
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+
         User user;
-        if (OptionalUser.isPresent()) {
-            user = OptionalUser.get();
+
+        if (optionalUser.isPresent()) {
+
+            // Existing account
+            user = optionalUser.get();
+
+            // Google Login is only allowed for normal users
+            if (!user.getRole().getRole().equals("ROLE_USER")) {
+                throw new ApiException(AuthErrorCode.GOOGLE_LOGIN_USER_ONLY);
+            }
+
         } else {
+
+            // New Google account
             user = new User();
             user.setName(name);
             user.setEmail(email);
+
+            // Every new Google account becomes USER
             Role role = roleRepository.findByRole("ROLE_USER");
             user.setRole(role);
+
             userRepository.save(user);
-            System.out.println(" GoogleUser is Saved in the database");
-            // generate the token
+
+            System.out.println("Google User is saved in the database");
         }
+
         Profile profile = profileRepository.findByUser(user).orElse(null);
 
         ProfileStatus status;
@@ -55,7 +74,17 @@ public class OAuth2UserServiceImpl implements OAuth2UserService {
         } else {
             status = profile.getProfileStatus();
         }
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().getRole());
-        return new JwtResponseDto(email, token, user.getRole().getRole(), status);
+
+        String token = jwtUtil.generateToken(
+                user.getEmail(),
+                user.getRole().getRole()
+        );
+
+        return new JwtResponseDto(
+                email,
+                token,
+                user.getRole().getRole(),
+                status
+        );
     }
 }

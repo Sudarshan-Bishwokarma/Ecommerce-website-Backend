@@ -35,6 +35,7 @@ public class VendorOrder {
     // platform commission
     private BigDecimal commissionAmount;
 
+    private LocalDateTime deliveredAt;
     // Amount vendor receives
     private BigDecimal vendorEarning;
     @OneToMany(mappedBy = "vendorOrder", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -45,15 +45,13 @@ public class VendorProductController {
 
         String email = user.getUsername();
 
-        ProductResponseDTO response =
-                productService.addProduct(email, request, productImage, variantImages);
+        ProductResponseDTO response = productService.addProduct(email, request, productImage, variantImages);
 
-        return ResponseEntity.ok(
-                new ApiResponse<>("Product Added Successfully", response)
+        return ResponseEntity.ok(new ApiResponse<>("Product Added Successfully", response)
         );
     }
 
-    //  update product
+    //  update product status
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<String>> updateStatus(@PathVariable Long id, Principal principal, @RequestParam ProductStatus status) {
         String email = principal.getName();

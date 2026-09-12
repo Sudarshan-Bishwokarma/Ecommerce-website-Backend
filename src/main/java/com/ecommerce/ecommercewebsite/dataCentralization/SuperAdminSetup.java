@@ -30,6 +30,7 @@ public class SuperAdminSetup {
             user.setPassword(passwordEncoder.encode("darshan@123"));
             profile.setCity("Kathmandu");
             profile.setNumber("9869779168");
+         
             Role role = roleRepository.findByRole("ROLE_SUPER_ADMIN");
             user.setRole(role);
             userRepository.save(user);

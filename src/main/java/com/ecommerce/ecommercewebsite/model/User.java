@@ -35,8 +35,10 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
-    @OneToOne
+    // User.java
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Profile profile;
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private BusinessProfile businessProfile;
 }
+    

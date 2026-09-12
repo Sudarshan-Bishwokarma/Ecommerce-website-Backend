@@ -15,6 +15,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByProductId(Long id);
 
+    Long countByVendor(User vendor);
+
+    List<Product> findAllByVendor(User vendor);
+
     List<Product> findByDistrict_id(Long districtId);
 
     Page<Product> findByDistrict_id(Long categoryId, Pageable pageable);
@@ -64,5 +68,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findTop8ByStatusOrderByProductIdDesc(ProductStatus status);
 
     Long countByStatus(ProductStatus status);
+
+    Page<Product> findByStatusIn(List<ProductStatus> approvalPending, Pageable pageable);
 }
 

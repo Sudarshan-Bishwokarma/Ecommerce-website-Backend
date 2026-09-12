@@ -3,11 +3,13 @@ package com.ecommerce.ecommercewebsite.services;
 import com.ecommerce.ecommercewebsite.dto.OrderRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.PaymentResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.users.OrderDetailsResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import com.ecommerce.ecommercewebsite.enums.PaymentMethod;
 import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
 import com.ecommerce.ecommercewebsite.exception.*;
+import com.ecommerce.ecommercewebsite.mappers.UserOrderDetailsMapper;
 import com.ecommerce.ecommercewebsite.mappers.UserOrderMapper;
 import com.ecommerce.ecommercewebsite.model.*;
 import com.ecommerce.ecommercewebsite.repositories.*;
@@ -40,6 +42,8 @@ public class UserOrderServiceImpl implements UserOrderService {
     private DistrictRepository districtRepository;
     @Autowired
     private OrderPaymentService orderPaymentService;
+    @Autowired
+    private UserOrderDetailsMapper userOrderDetailsMapper;
 
     @Transactional
     @Override
@@ -141,6 +145,7 @@ public class UserOrderServiceImpl implements UserOrderService {
                 orderItem.setPriceAtPurchase(price);
                 BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
                 orderItem.setTotalPrice(itemTotal);
+                orderItem.setTotalPrice(itemTotal);
                 vendorTotalAmount = vendorTotalAmount.add(itemTotal);
                 orderItems.add(orderItem);
 
@@ -183,7 +188,7 @@ public class UserOrderServiceImpl implements UserOrderService {
     @Override
     public Page<OrderResponseDTO> getUsersOrders(String email, String sort, OrderStatus status, int page, int size) {
         User user = userRepository.findByEmail(email).
-                orElseThrow(() -> new UserNotFoundException("User not found"));
+                orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         Pageable pageable;
         if (sort != null) {
             switch (sort) {
@@ -230,7 +235,7 @@ public class UserOrderServiceImpl implements UserOrderService {
     }
 
     @Override
-    public OrderResponseDTO getOrderById(Long orderId, String email) {
+    public OrderDetailsResponseDTO getOrderById(Long orderId, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
@@ -239,7 +244,7 @@ public class UserOrderServiceImpl implements UserOrderService {
         if (!order.getCustomer().getEmail().equals(email)) {
             throw new AccessDeniedException("Access Denied");
         }
-        OrderResponseDTO responseDTO = orderMapper.mapToDTO(order);
+        OrderDetailsResponseDTO responseDTO = userOrderDetailsMapper.mapToDTO(order);
         return responseDTO;
     }
 

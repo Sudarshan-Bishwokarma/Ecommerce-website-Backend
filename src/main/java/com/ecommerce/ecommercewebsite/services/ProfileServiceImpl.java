@@ -40,11 +40,15 @@ public class ProfileServiceImpl implements ProfileService {
         if (profileRequestDTO.getCity() == null || profileRequestDTO.getCity().isBlank() || profileRequestDTO.getCountry() == null || profileRequestDTO.getCountry().isBlank() || profileRequestDTO.getNumber() == null || profileRequestDTO.getNumber().isBlank() || profileRequestDTO.getProfile() == null || profileRequestDTO.getProfile().isEmpty()) {
             throw new ApiException(AuthErrorCode.INVALID_INPUTS);
         }
+        if (profileRepository.existsByNumber(profileRequestDTO.getNumber())) {
+            throw new ApiException(AuthErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
+        }
         Profile profile = new Profile();
         profile.setCity(profileRequestDTO.getCity());
         profile.setCountry(profileRequestDTO.getCountry());
         profile.setNumber(profileRequestDTO.getNumber());
         profile.setUser(user);
+
         profile.setProfileStatus(ProfileStatus.COMPLETED);
         try {
             profile.setProfileImage(profileRequestDTO.getProfile().getBytes());
@@ -53,6 +57,8 @@ public class ProfileServiceImpl implements ProfileService {
         }
         profile.setProfileStatus(ProfileStatus.COMPLETED);
         profileRepository.save(profile);
+        user.setProfile(profile);
+        userRepository.save(user);
         ProfileResponseDTO responseDTO = mapper.map(profile);
         return responseDTO;
     }

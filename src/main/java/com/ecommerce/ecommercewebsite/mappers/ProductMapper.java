@@ -55,7 +55,6 @@ public class ProductMapper {
         } else {
 
             dto.setHasVariants(false);
-            dto.setProductPrice(product.getPrice());
             dto.setStock(product.getStock());
         }
         dto.setProductPrice(product.getDisplayPrice());

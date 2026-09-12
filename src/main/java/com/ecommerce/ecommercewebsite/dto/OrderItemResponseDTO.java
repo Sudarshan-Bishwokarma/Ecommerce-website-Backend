@@ -8,10 +8,13 @@ import java.math.BigDecimal;
 public class OrderItemResponseDTO {
 
     private Long productId;
-
     private String productName;
+
+    private String size;
+    private String color;
 
     private Integer quantity;
 
     private BigDecimal priceAtPurchase;
+    private BigDecimal totalPrice;
 }

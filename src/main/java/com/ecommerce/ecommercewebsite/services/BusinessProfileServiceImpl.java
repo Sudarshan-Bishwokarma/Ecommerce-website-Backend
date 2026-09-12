@@ -15,6 +15,8 @@ import com.ecommerce.ecommercewebsite.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 public class BusinessProfileServiceImpl implements BusinessProfileService {
     @Autowired
@@ -48,7 +50,10 @@ public class BusinessProfileServiceImpl implements BusinessProfileService {
         } catch (Exception e) {
             throw new ApiException(AuthErrorCode.PROFILE_UPLOAD_FAILURE);
         }
+        document.setUploadedAt(LocalDateTime.now());
+        document.setFileName(businessProfileRequestDTO.getDocument().getName());
         businessProfile.setBusinessDocument(document);
+    
 
         BusinessProfile savedProfile = businessProfileRepository.save(businessProfile);
         VendorResponseDTO vendorResponseDTO = vendorMapper.map(savedProfile);

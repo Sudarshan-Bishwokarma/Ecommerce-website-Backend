@@ -1,6 +1,7 @@
 package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.*;
+import com.ecommerce.ecommercewebsite.dto.vendor.VendorOrderListResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import org.springframework.data.domain.Page;
 
@@ -8,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface VendorOrderService {
-    public Page<VendorOrderResponseDTO> getVendorOrders(String email, int page, int size);
+    public Page<VendorOrderListResponseDTO> getVendorOrders(String email, int page, int size, OrderStatus status, String sort);
 
     public VendorOrderResponseDTO getVendorOrderDetails(Long vendorOrderId, String email);
 

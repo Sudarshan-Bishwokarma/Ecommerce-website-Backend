@@ -1,6 +1,7 @@
 package com.ecommerce.ecommercewebsite.controllers.vendor;
 
 import com.ecommerce.ecommercewebsite.dto.*;
+import com.ecommerce.ecommercewebsite.dto.vendor.VendorOrderListResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import com.ecommerce.ecommercewebsite.repositories.OrderRepository;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
@@ -24,20 +25,22 @@ public class VendorOrderController {
 
     // get all orders
     @GetMapping("/orders")
-    ResponseEntity<ApiResponse<Page<VendorOrderResponseDTO>>> getOrders(
+    ResponseEntity<ApiResponse<Page<VendorOrderListResponseDTO>>> getOrders(
             Principal principal,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(defaultValue = "newest") String sort
 
     ) {
         String email = principal.getName();
-        Page<VendorOrderResponseDTO> responseDTOS = vendorOrderService.getVendorOrders(email, page, size);
-        ApiResponse<Page<VendorOrderResponseDTO>> apiResponse = new ApiResponse<>("success", responseDTOS);
+        Page<VendorOrderListResponseDTO> responseDTOS = vendorOrderService.getVendorOrders(email, page, size, status, sort);
+        ApiResponse<Page<VendorOrderListResponseDTO>> apiResponse = new ApiResponse<>("success", responseDTOS);
         return ResponseEntity.ok(apiResponse);
     }
 
     //  get order  details
-    @GetMapping("/vendor-order/{vendorOrderId}")
+    @GetMapping("/vendor-detail/{vendorOrderId}")
     ResponseEntity<ApiResponse<VendorOrderResponseDTO>> getVendorOrderDetails(@PathVariable Long vendorOrderId, Principal principal) {
         String email = principal.getName();
         VendorOrderResponseDTO responseDTO = vendorOrderService.getVendorOrderDetails(vendorOrderId, email);
@@ -62,7 +65,7 @@ public class VendorOrderController {
     }
 
     //  update  status
-    @PutMapping("/vendor-order/{vendorOrderId}/status/")
+    @PutMapping("/update/{vendorOrderId}/status")
     ResponseEntity<ApiResponse<UpdateVendorOrderStatusResponseDTO>> updateStatus(@PathVariable Long vendorOrderId, @RequestBody UpdateOrderStatusDTO updateOrderStatusDTO, Principal principal) {
         String email = principal.getName();
         UpdateVendorOrderStatusResponseDTO responseDTO = vendorOrderService.updateVendorOrderStatus(email, vendorOrderId, updateOrderStatusDTO);

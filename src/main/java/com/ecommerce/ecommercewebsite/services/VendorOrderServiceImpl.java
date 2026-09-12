@@ -1,9 +1,12 @@
 package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.*;
+import com.ecommerce.ecommercewebsite.dto.vendor.VendorOrderListResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
+import com.ecommerce.ecommercewebsite.enums.OrderErrorCode;
 import com.ecommerce.ecommercewebsite.enums.ProductErrorCode;
 import com.ecommerce.ecommercewebsite.exception.ApiException;
+import com.ecommerce.ecommercewebsite.mappers.VendorOrderDetailsMapper;
 import com.ecommerce.ecommercewebsite.mappers.VendorOrderMapper;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import com.ecommerce.ecommercewebsite.model.User;
@@ -15,8 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,20 +35,51 @@ public class VendorOrderServiceImpl implements VendorOrderService {
     VendorOrderRepository vendorOrderRepository;
     @Autowired
     VendorOrderMapper vendorOrderMapper;
+    @Autowired
+    private VendorOrderDetailsMapper vendorOrderDetailsMapper;
+    @Autowired
+    private EmailService emailService;
 
     @Override
-    public Page<VendorOrderResponseDTO> getVendorOrders(String email, int page, int size) {
+    public Page<VendorOrderListResponseDTO> getVendorOrders(String email, int page, int size, OrderStatus status, String sort) {
         User vendor = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.VENDOR_NOT_FOUND));
-        Pageable pageable = PageRequest.of(page, size);
-        Page<VendorOrder> myOrders = vendorOrderRepository.findByVendor(vendor, pageable);
-        return myOrders.map(vendorOrderMapper::mapToDTO);
+        Pageable pageable;
+
+        switch (sort) {
+            case "oldest":
+                pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
+                break;
+            case "high":
+                pageable = PageRequest.of(page, size, Sort.by("totalAmount").descending());
+                break;
+            case "low":
+                pageable = PageRequest.of(page, size, Sort.by("totalAmount").ascending());
+                break;
+            case "newest":
+                pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+            default:
+                pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+                break;
+        }
+        Page<VendorOrder> vendorOrders;
+
+        if (status != null) {
+            vendorOrders = vendorOrderRepository.findByVendorAndStatus(vendor, status, pageable);
+        } else {
+            vendorOrders = vendorOrderRepository.findByVendor(vendor, pageable);
+        }
+
+        return vendorOrders.map(vendorOrderMapper::mapToDTO);
+
+
     }
 
     @Override
     public VendorOrderResponseDTO getVendorOrderDetails(Long vendorOrderId, String email) {
         User vendor = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         VendorOrder vendorOrder = vendorOrderRepository.findByIdAndVendor(vendorOrderId, vendor).orElseThrow(() -> new ApiException(ProductErrorCode.VENDOR_ORDER_NOT_FOUND));
-        VendorOrderResponseDTO responseDTO = vendorOrderMapper.mapToDTO(vendorOrder);
+        VendorOrderResponseDTO responseDTO = vendorOrderDetailsMapper.mapToDTO(vendorOrder);
         return responseDTO;
     }
 
@@ -51,8 +87,57 @@ public class VendorOrderServiceImpl implements VendorOrderService {
     public UpdateVendorOrderStatusResponseDTO updateVendorOrderStatus(String email, Long vendorOrderId, UpdateOrderStatusDTO updateOrderStatusDTO) {
         User vendor = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.VENDOR_NOT_FOUND));
         VendorOrder vendorOrder = vendorOrderRepository.findByIdAndVendor(vendorOrderId, vendor).orElseThrow(() -> new ApiException(ProductErrorCode.VENDOR_ORDER_NOT_FOUND));
-        vendorOrder.setStatus(updateOrderStatusDTO.getOrderStatus());
+        // Only allow PAID or PROCESSING  are DELIVERED
+        if (updateOrderStatusDTO.getOrderStatus() != OrderStatus.DELIVERED) {
+            throw new ApiException(OrderErrorCode.INVALID_ORDER_STATUS);
+        }
+        if (vendorOrder.getStatus() != OrderStatus.PAID &&
+                vendorOrder.getStatus() != OrderStatus.PROCESSING) {
+
+            throw new ApiException(OrderErrorCode.INVALID_ORDER_STATUS);
+        }
+        if (vendorOrder.getStatus() == OrderStatus.PROCESSING && vendorOrder.getCommissionAmount() == null) {
+
+            BigDecimal commissionRate = new BigDecimal("0.10");
+
+            BigDecimal commissionAmount = vendorOrder.getTotalAmount().multiply(commissionRate);
+
+            BigDecimal vendorEarning = vendorOrder.getTotalAmount().subtract(commissionAmount);
+
+            vendorOrder.setCommissionAmount(commissionAmount);
+            vendorOrder.setVendorEarning(vendorEarning);
+
+        }
+        vendorOrder.setDeliveredAt(LocalDateTime.now());
+
+        // Change status to DELIVERED
+        vendorOrder.setStatus(OrderStatus.DELIVERED);
+
         VendorOrder savedVendorOrder = vendorOrderRepository.save(vendorOrder);
+
+        // Get customer
+        User customer = savedVendorOrder.getOrder().getCustomer();
+
+        // Prepare email
+        EmailDetailsDTO emailDetails = new EmailDetailsDTO();
+
+        emailDetails.setRecipient(customer.getEmail());
+
+        emailDetails.setSubject("Your Order Has Been Delivered");
+
+        emailDetails.setMsgBody(
+                "Dear " + customer.getName() + ",\n\n" +
+                        "Your order has been successfully marked as delivered.\n\n" +
+                        "Vendor Order ID: " + savedVendorOrder.getId() + "\n" +
+                        "Status: DELIVERED\n\n" +
+                        "Thank you for shopping with LocalConnect.\n\n" +
+                        "Best regards,\n" +
+                        "LocalConnect Team"
+        );
+
+        // Send email
+        emailService.sendSimpleMail(emailDetails);
+
         UpdateVendorOrderStatusResponseDTO responseDTO = new UpdateVendorOrderStatusResponseDTO();
         responseDTO.setVendorOrderId(savedVendorOrder.getId());
         responseDTO.setStatus(savedVendorOrder.getStatus());
@@ -67,7 +152,7 @@ public class VendorOrderServiceImpl implements VendorOrderService {
         User vendor = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.USER_NOT_FOUND));
         Pageable pageable = PageRequest.of(page, size);
         Page<VendorOrder> vendorOrders = vendorOrderRepository.findByVendorAndStatus(vendor, status, pageable);
-        return vendorOrders.map(vendorOrderMapper::mapToDTO);
+        return vendorOrders.map(vendorOrderDetailsMapper::mapToDTO);
     }
 
     @Override
@@ -75,7 +160,7 @@ public class VendorOrderServiceImpl implements VendorOrderService {
         User vendor = userRepository.findByEmail(email).orElseThrow(() -> new ApiException(AuthErrorCode.VENDOR_NOT_FOUND));
         Pageable pageable = PageRequest.of(page, size);
         Page<VendorOrder> vendorOrders = vendorOrderRepository.findByVendorAndOrder_CreatedAtBetween(vendor, startDate, endDate, pageable);
-        return vendorOrders.map(vendorOrderMapper::mapToDTO);
+        return vendorOrders.map(vendorOrderDetailsMapper::mapToDTO);
     }
 
     @Override
@@ -84,7 +169,7 @@ public class VendorOrderServiceImpl implements VendorOrderService {
                 orElseThrow(() -> new ApiException(AuthErrorCode.VENDOR_NOT_FOUND));
         Pageable pageable = PageRequest.of(page, size);
         Page<VendorOrder> vendorOrders = vendorOrderRepository.findByVendor_Email(email, pageable);
-        return vendorOrders.map(vendorOrderMapper::mapToDTO);
+        return vendorOrders.map(vendorOrderDetailsMapper::mapToDTO);
 
     }
 

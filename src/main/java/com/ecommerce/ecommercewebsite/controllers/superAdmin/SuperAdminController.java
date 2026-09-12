@@ -1,7 +1,10 @@
 package com.ecommerce.ecommercewebsite.controllers.superAdmin;
 
 import com.ecommerce.ecommercewebsite.dto.*;
+import com.ecommerce.ecommercewebsite.dto.superadmin.*;
+import com.ecommerce.ecommercewebsite.dto.vendor.VendorDetailsResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.ApprovalStatus;
+import com.ecommerce.ecommercewebsite.enums.FeaturedRequestStatus;
 import com.ecommerce.ecommercewebsite.enums.ProductStatus;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.CategoryService;
@@ -9,12 +12,16 @@ import com.ecommerce.ecommercewebsite.services.FeaturedRequestAdminService;
 import com.ecommerce.ecommercewebsite.services.SuperAdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/super-admin")
@@ -100,6 +107,45 @@ public class SuperAdminController {
         return ResponseEntity.ok(response);
     }
 
+    // Get all products with optional status filter
+    @GetMapping("/products")
+    ResponseEntity<ApiResponse<Page<ProductResponseDTO>>> getProducts(
+            @RequestParam(required = false) ProductStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+
+        Page<ProductResponseDTO> products = superAdminService.getProducts(status, page, size);
+
+        ApiResponse<Page<ProductResponseDTO>> response = new ApiResponse<>("Products fetched successfully", products);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/product/{id}")
+    ResponseEntity<ApiResponse<ProductDetailsResponseDTO>> getProductDetails(
+            @PathVariable Long id
+    ) {
+
+        ProductDetailsResponseDTO product = superAdminService.getProductDetails(id);
+
+        ApiResponse<ProductDetailsResponseDTO> response = new ApiResponse<>("Product details fetched successfully", product);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // get vendor  details
+    @GetMapping("/vendor/{id}/detail")
+    public ResponseEntity<ApiResponse<VendorDetailsResponseDTO>> getVendorDetails(
+            @PathVariable Long id
+    ) {
+        VendorDetailsResponseDTO vendor = superAdminService.getVendorDetails(id);
+
+        ApiResponse<VendorDetailsResponseDTO> response = new ApiResponse<>("Vendor details fetched successfully", vendor);
+
+        return ResponseEntity.ok(response);
+    }
+
     //  approve or reject  the  pending    products
     @PutMapping("/product/{id}/approval")
     ResponseEntity<ApiResponse<String>> updateProductApproval(
@@ -122,6 +168,20 @@ public class SuperAdminController {
         return ResponseEntity.ok(apiResponse);
     }
 
+    // view all featured requests with optional status filter
+    @GetMapping("/featured-requests")
+    ResponseEntity<ApiResponse<Page<FeaturedProductResponseDTO>>> getFeaturedRequests(
+            @RequestParam(required = false) FeaturedRequestStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<FeaturedProductResponseDTO> response = featuredRequestAdminService.getFeaturedRequests(status, page, size);
+
+        ApiResponse<Page<FeaturedProductResponseDTO>> apiResponse = new ApiResponse<>("Featured requests fetched successfully", response);
+
+        return ResponseEntity.ok(apiResponse);
+    }
+
     //   approve  feature  request
     @PutMapping("/featured-request/{id}/approve")
     ResponseEntity<ApiResponse<String>> approveFeaturedRequest(@PathVariable Long id, @RequestBody FeaturedRequestActionDTO featuredRequest) {
@@ -139,23 +199,21 @@ public class SuperAdminController {
         return ResponseEntity.ok(apiResponse);
     }
 
+    //  get  featured request details
+    @GetMapping("/featured-request/{id}")
+    public ResponseEntity<ApiResponse<SuperAdminFeaturedRequestDetailsResponseDTO>> getFeaturedRequestDetails(
+            @PathVariable Long id
+    ) {
+        SuperAdminFeaturedRequestDetailsResponseDTO response = featuredRequestAdminService.getFeaturedRequestDetails(id);
+
+        ApiResponse<SuperAdminFeaturedRequestDetailsResponseDTO> apiResponse = new ApiResponse<>("Featured request details fetched successfully", response);
+
+        return ResponseEntity.ok(apiResponse);
+    }
+
 
     // add category
-    @PostMapping(value = "/add-category", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    ResponseEntity<ApiResponse<CategoryResponseDTO>> addCategory(@ModelAttribute CategoryRequestDTO categoryRequestDTO) {
-        CategoryResponseDTO response = superAdminService.addCategory(categoryRequestDTO);
-        ApiResponse<CategoryResponseDTO> apiResponse = new ApiResponse<>("Success", response);
-        return ResponseEntity.ok(apiResponse);
-    }
 
-    //  update category
-    @PutMapping(value = "/update-category/{categoryId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    ResponseEntity<ApiResponse<CategoryResponseDTO>> updateCategory(@ModelAttribute CategoryUpdateRequestDTO categoryUpdateRequestDTO, @PathVariable Long categoryId) {
-        CategoryResponseDTO responseDTO = superAdminService.updateCategory(categoryUpdateRequestDTO, categoryId);
-        ApiResponse<CategoryResponseDTO> apiResponse = new ApiResponse<>("Success", responseDTO);
-        return ResponseEntity.ok(apiResponse);
-
-    }
 
     // Get total commission earned from orders
     @GetMapping("/earnings/order-commission")
@@ -190,5 +248,52 @@ public class SuperAdminController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/income")
+    public ResponseEntity<ApiResponse<SuperAdminIncomeResponseDTO>> getIncome(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        SuperAdminIncomeResponseDTO response = superAdminService.getIncome(startDate, endDate);
+        ApiResponse<SuperAdminIncomeResponseDTO> apiResponse = new ApiResponse<>("Income fetched successfully", response);
+        return ResponseEntity.ok(apiResponse);
+
+    }
+
+    @GetMapping("/sales")
+    public ResponseEntity<ApiResponse<List<SuperAdminSalesDTO>>> getSalesByProduct(
+            @RequestParam(defaultValue = "quantityDesc") String sort
+    ) {
+
+        List<SuperAdminSalesDTO> response = superAdminService.getSalesByProduct(sort);
+
+        ApiResponse<List<SuperAdminSalesDTO>> apiResponse = new ApiResponse<>("Sales fetched successfully", response);
+
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    @GetMapping("/commission-by-vendor")
+    public ResponseEntity<ApiResponse<List<SuperAdminCommissionDTO>>> getCommissionByVendor(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate
+    ) {
+
+        List<SuperAdminCommissionDTO> response = superAdminService.getCommissionByVendor(startDate, endDate);
+
+        ApiResponse<List<SuperAdminCommissionDTO>> apiResponse = new ApiResponse<>("Commission fetched successfully", response);
+
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    @GetMapping("/commission-by-district")
+    public ResponseEntity<ApiResponse<List<SuperAdminDistrictCommissionDTO>>> getCommissionByDistrict(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate
+    ) {
+
+        List<SuperAdminDistrictCommissionDTO> response = superAdminService.getCommissionByDistrict(startDate, endDate);
+
+        ApiResponse<List<SuperAdminDistrictCommissionDTO>> apiResponse = new ApiResponse<>("District commission fetched successfully", response);
+
+        return ResponseEntity.ok(apiResponse);
+    }
 
 }

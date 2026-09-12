@@ -2,6 +2,7 @@ package com.ecommerce.ecommercewebsite.controllers.user;
 
 import com.ecommerce.ecommercewebsite.dto.OrderRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.users.OrderDetailsResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.UserOrderService;
@@ -58,10 +59,10 @@ public class UserOrderController {
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<ApiResponse<OrderResponseDTO>> getOrderById(@PathVariable Long orderId, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<OrderDetailsResponseDTO>> getOrderById(@PathVariable Long orderId, @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
-        OrderResponseDTO responseDTO = orderService.getOrderById(orderId, email);
-        ApiResponse<OrderResponseDTO> apiResponse = new ApiResponse<>("Order found successfully", responseDTO);
+        OrderDetailsResponseDTO responseDTO = orderService.getOrderById(orderId, email);
+        ApiResponse<OrderDetailsResponseDTO> apiResponse = new ApiResponse<>("Order found successfully", responseDTO);
         return ResponseEntity.ok(apiResponse);
     }
 

@@ -99,7 +99,7 @@ public class AuthServiceImpl implements AuthService {
         // case  2  :  if  user  exist   but  not  verified
         if (existingUser != null && !existingUser.isVerified()) {
             SecureRandom random = new SecureRandom();
-            String otp = String.valueOf(random.nextLong());
+            String otp = String.valueOf(100000 + random.nextInt(900000));
             existingUser.setOtp(otp);
             existingUser.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
             userRepository.save(existingUser);

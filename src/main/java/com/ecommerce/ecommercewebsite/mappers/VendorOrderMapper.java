@@ -2,6 +2,7 @@ package com.ecommerce.ecommercewebsite.mappers;
 
 import com.ecommerce.ecommercewebsite.dto.OrderItemResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.VendorOrderResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.vendor.VendorOrderListResponseDTO;
 import com.ecommerce.ecommercewebsite.model.OrderItem;
 import com.ecommerce.ecommercewebsite.model.VendorOrder;
 import org.springframework.stereotype.Component;
@@ -11,29 +12,36 @@ import java.util.List;
 
 @Component
 public class VendorOrderMapper {
-    public VendorOrderResponseDTO mapToDTO(VendorOrder vendorOrder) {
-        VendorOrderResponseDTO vendorOrderResponseDTO = new VendorOrderResponseDTO();
-        vendorOrderResponseDTO.setVendorOrderId(vendorOrder.getId());
-        vendorOrderResponseDTO.setOrderId(vendorOrder.getOrder().getId());
-        vendorOrderResponseDTO.setCustomerName(vendorOrder.getOrder().getCustomer().getName());
-        vendorOrderResponseDTO.setCustomerEmail(vendorOrder.getOrder().getCustomer().getEmail());
-        
-        vendorOrderResponseDTO.setStatus(vendorOrder.getStatus());
-        vendorOrderResponseDTO.setCreatedAt(vendorOrder.getOrder().getCreatedAt());
-        vendorOrderResponseDTO.setTotalAmount(vendorOrder.getTotalAmount());
-        vendorOrderResponseDTO.setCommissionAmount(vendorOrder.getCommissionAmount());
-        vendorOrderResponseDTO.setVendorEarning(vendorOrder.getVendorEarning());
-        List<OrderItemResponseDTO> orderItems = new ArrayList<>();
-        for (OrderItem orderItem : vendorOrder.getOrderItems()) {
-            OrderItemResponseDTO orderItemResponseDTO = new OrderItemResponseDTO();
-            orderItemResponseDTO.setProductId(orderItem.getProduct().getProductId());
-            orderItemResponseDTO.setProductName(orderItem.getProduct().getProductName());
-            orderItemResponseDTO.setQuantity(orderItem.getQuantity());
-            orderItemResponseDTO.setPriceAtPurchase(orderItem.getPriceAtPurchase());
-            orderItems.add(orderItemResponseDTO);
-        }
-        vendorOrderResponseDTO.setItems(orderItems);
-        return vendorOrderResponseDTO;
+    public VendorOrderListResponseDTO mapToDTO(VendorOrder vendorOrder) {
 
+        VendorOrderListResponseDTO dto = new VendorOrderListResponseDTO();
+
+        dto.setVendorOrderId(vendorOrder.getId());
+        dto.setOrderId(vendorOrder.getOrder().getId());
+        dto.setOrderNumber(vendorOrder.getOrder().getOrderNumber());
+        // Customer
+        dto.setCustomerName(vendorOrder.getOrder().getCustomer().getName());
+
+        // Order
+        dto.setStatus(vendorOrder.getStatus());
+        dto.setCreatedAt(vendorOrder.getCreatedAt());
+
+        // Order Summary
+        List<OrderItem> orderItems = vendorOrder.getOrderItems();
+
+        dto.setTotalItems(orderItems.size());
+
+        int totalUnits = 0;
+
+        for (OrderItem item : orderItems) {
+            totalUnits += item.getQuantity();
+        }
+
+        dto.setTotalUnits(totalUnits);
+
+        // Vendor Order Amount
+        dto.setTotalAmount(vendorOrder.getTotalAmount());
+
+        return dto;
     }
 }

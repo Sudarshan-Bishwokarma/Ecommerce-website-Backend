@@ -93,6 +93,7 @@ public class SuperAdminOrderServiceImpl implements SuperAdminOrderService {
         return recentOrders;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Page<SuperAdminOrderResponseDTO> getAllOrders(int page, int size, String sort, OrderStatus status) {
         Pageable pageable;
@@ -135,6 +136,26 @@ public class SuperAdminOrderServiceImpl implements SuperAdminOrderService {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ApiException(OrderErrorCode.ORDER_NOT_FOUND));
         return superAdminOrderDetailMapper.mapToDTO(order);
 
+    }
+
+    @Override
+    public Order markOrderAsDelivered(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ApiException(OrderErrorCode.ORDER_NOT_FOUND));
+        if (order.getVendorOrders() == null || order.getVendorOrders().isEmpty()) {
+            throw new ApiException(OrderErrorCode.INVALID_ORDER_STATUS);
+        }
+        for (VendorOrder vendorOrder : order.getVendorOrders()) {
+            if (!vendorOrder.getStatus().equals(OrderStatus.DELIVERED)) {
+                throw new ApiException(OrderErrorCode.INVALID_ORDER_STATUS);
+            }
+            // all  vendor orders are delivered
+            order.setStatus(OrderStatus.DELIVERED);
+
+
+        }
+        return orderRepository.save(order);
+
+        
     }
 
 }

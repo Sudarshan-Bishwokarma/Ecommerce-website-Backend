@@ -5,6 +5,7 @@ import com.ecommerce.ecommercewebsite.dto.superadmin.RecentOrderResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.superadmin.SuperAdminOrderDetailDTO;
 import com.ecommerce.ecommercewebsite.dto.superadmin.SuperAdminOrderResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
+import com.ecommerce.ecommercewebsite.model.Order;
 import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
@@ -17,7 +18,9 @@ public interface SuperAdminOrderService {
 
     public List<RecentOrderResponseDTO> getRecentOrders();
 
-    Page<SuperAdminOrderResponseDTO> getAllOrders(int page, int size, String sort, OrderStatus status);
+    public Page<SuperAdminOrderResponseDTO> getAllOrders(int page, int size, String sort, OrderStatus status);
 
-    SuperAdminOrderDetailDTO getOrderDetails(Long orderId);
+    public SuperAdminOrderDetailDTO getOrderDetails(Long orderId);
+
+    public Order markOrderAsDelivered(Long orderId);
 }

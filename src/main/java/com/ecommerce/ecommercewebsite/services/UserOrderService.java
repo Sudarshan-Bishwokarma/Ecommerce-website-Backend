@@ -2,6 +2,7 @@ package com.ecommerce.ecommercewebsite.services;
 
 import com.ecommerce.ecommercewebsite.dto.OrderRequestDTO;
 import com.ecommerce.ecommercewebsite.dto.OrderResponseDTO;
+import com.ecommerce.ecommercewebsite.dto.users.OrderDetailsResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
 import org.springframework.data.domain.Page;
 
@@ -12,5 +13,5 @@ public interface UserOrderService {
 
     public String cancelOrder(Long orderId, String email);
 
-    public OrderResponseDTO getOrderById(Long orderId, String email);
+    public OrderDetailsResponseDTO getOrderById(Long orderId, String email);
 }

@@ -1,6 +1,8 @@
 package com.ecommerce.ecommercewebsite.security;
 
 import com.ecommerce.ecommercewebsite.dto.JwtResponseDto;
+import com.ecommerce.ecommercewebsite.enums.AuthErrorCode;
+import com.ecommerce.ecommercewebsite.exception.ApiException;
 import com.ecommerce.ecommercewebsite.services.OAuth2UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,24 +24,54 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private OAuth2UserService oAuth2UserService;
 
     @Override
-    //onAuthenticationSuccess() is automatically called by Spring Security.
+    // onAuthenticationSuccess() is automatically called by Spring Security.
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication)
             throws IOException, ServletException {
-//oAuth2User stores all logged-in Google user info.
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
-        JwtResponseDto jwtResponse = oAuth2UserService.processGoogleLogin(oAuth2User);
+        try {
 
+            // oAuth2User stores all logged-in Google user information.
+            OAuth2User oAuth2User =
+                    (OAuth2User) authentication.getPrincipal();
 
-        String redirectUrl =
-                "http://localhost:5173/oauth-success" +
-                        "?token=" + URLEncoder.encode(jwtResponse.getToken(), StandardCharsets.UTF_8) +
-                        "&role=" + URLEncoder.encode(jwtResponse.getRole(), StandardCharsets.UTF_8) +
-                        "&email=" + URLEncoder.encode(jwtResponse.getEmail(), StandardCharsets.UTF_8);
+            JwtResponseDto jwtResponse =
+                    oAuth2UserService.processGoogleLogin(oAuth2User);
 
-        response.sendRedirect(redirectUrl);
+            String redirectUrl =
+                    "http://localhost:5173/oauth-success" +
+                            "?token=" + URLEncoder.encode(
+                            jwtResponse.getToken(),
+                            StandardCharsets.UTF_8) +
+                            "&role=" + URLEncoder.encode(
+                            jwtResponse.getRole(),
+                            StandardCharsets.UTF_8) +
+                            "&email=" + URLEncoder.encode(
+                            jwtResponse.getEmail(),
+                            StandardCharsets.UTF_8);
+
+            response.sendRedirect(redirectUrl);
+
+        } catch (ApiException e) {
+
+            String message;
+
+            if (e.getCode() == AuthErrorCode.GOOGLE_LOGIN_USER_ONLY) {
+                message = "Can't login. Google Login is available for users only.";
+            } else {
+                message = e.getMessage();
+            }
+
+            String redirectUrl =
+                    "http://localhost:5173/oauth-success" +
+                            "?error=" + URLEncoder.encode(
+                            message,
+                            StandardCharsets.UTF_8);
+
+            response.sendRedirect(redirectUrl);
+        }
+
         clearAuthenticationAttributes(request);
     }
 }

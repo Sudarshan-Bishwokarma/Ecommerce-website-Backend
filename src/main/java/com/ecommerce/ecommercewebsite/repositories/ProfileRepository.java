@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
     public Optional<Profile> findByUser(User user);
 
+    public boolean existsByNumber(String number);
+
 }

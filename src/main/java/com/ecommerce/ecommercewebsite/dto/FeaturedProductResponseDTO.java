@@ -12,7 +12,7 @@ public class FeaturedProductResponseDTO {
     private String productImage;
     private String productDescription;
     // vendor information
-    private Long VendorId;
+    private Long vendorId;
     private String vendorName;
     // product classification
     private String categoryName;

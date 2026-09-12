@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -33,4 +34,5 @@ public class FeaturedPayment {
     private PaymentMethod paymentMethod;
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
+    private LocalDateTime paidAt;
 }

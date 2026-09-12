@@ -5,6 +5,7 @@ import com.ecommerce.ecommercewebsite.dto.superadmin.RecentOrderResponseDTO;
 import com.ecommerce.ecommercewebsite.dto.superadmin.SuperAdminOrderDetailDTO;
 import com.ecommerce.ecommercewebsite.dto.superadmin.SuperAdminOrderResponseDTO;
 import com.ecommerce.ecommercewebsite.enums.OrderStatus;
+import com.ecommerce.ecommercewebsite.model.Order;
 import com.ecommerce.ecommercewebsite.response.ApiResponse;
 import com.ecommerce.ecommercewebsite.services.superadmin.SuperAdminOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,6 +75,18 @@ public class SuperAdminOrderController {
         ApiResponse<SuperAdminOrderDetailDTO> response = new ApiResponse<>("Order details fetched successfully", orderDetails);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/order/{orderId}/delivered")
+    public ResponseEntity<ApiResponse<Order>> markOrderAsDelivered(
+            @PathVariable Long orderId
+    ) {
+
+        Order order = superAdminOrderService.markOrderAsDelivered(orderId);
+
+        ApiResponse<Order> apiResponse = new ApiResponse<>("success", order);
+
+        return ResponseEntity.ok(apiResponse);
     }
 
 }

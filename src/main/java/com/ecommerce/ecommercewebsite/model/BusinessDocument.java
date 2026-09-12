@@ -19,10 +19,11 @@ public class BusinessDocument {
     @Enumerated(EnumType.STRING)
     private DocumentType documentType;
     private String fileName;
+    private String contentType;
     private LocalDateTime uploadedAt;
 
     @Lob
     @Column(columnDefinition = "LONGBLOB")
     private byte[] document;
-    
+
 }

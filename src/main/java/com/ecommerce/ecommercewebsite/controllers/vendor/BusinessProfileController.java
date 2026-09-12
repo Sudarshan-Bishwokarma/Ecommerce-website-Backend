@@ -25,6 +25,9 @@ public class BusinessProfileController {
     @PostMapping("/complete/business-profile")
     public ResponseEntity<ApiResponse<VendorResponseDTO>> vendorOnboarding(@AuthenticationPrincipal UserDetails details, @ModelAttribute BusinessProfileRequestDTO businessProfileRequestDTO) {
 
+        System.out.println("AUTHENTICATED USER: " + details);
+        System.out.println("USERNAME: " + (details != null ? details.getUsername() : null));
+        System.out.println("AUTHORITIES: " + (details != null ? details.getAuthorities() : null));
         String email = details.getUsername();
         VendorResponseDTO responseDTO = businessProfileService.vendorOnboarding(email, businessProfileRequestDTO);
         ApiResponse<VendorResponseDTO> apiResponse = new ApiResponse<>(" Profile is Completed Successfully", responseDTO);

@@ -43,13 +43,18 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ApiException(PaymentErrorCode.PAYMENT_NOT_ALLOWED);
 
         }
-        FeaturedPayment featuredPayment = new FeaturedPayment();
+        FeaturedPayment featuredPayment =
+                featuredPaymentRepository
+                        .findByFeaturedRequest(featuredRequest)
+                        .orElseGet(FeaturedPayment::new);
         featuredPayment.setFeaturedRequest(featuredRequest);
         featuredPayment.setFeaturedPlan(plan);
         featuredPayment.setAmount(plan.getPrice());
         featuredPayment.setPaymentMethod(paymentRequestDTO.getPaymentMethod());
         featuredPayment.setStatus(PaymentStatus.PENDING);
+
         featuredPaymentRepository.save(featuredPayment);
+
         if (paymentRequestDTO.getPaymentMethod() == PaymentMethod.ESEWA) {
 
             PaymentResponseDTO response = esewaPaymentService.createPayment(featuredRequestId, plan);
@@ -76,6 +81,7 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ApiException(PaymentErrorCode.PAYMENT_NOT_ALLOWED);
         }
         featuredPayment.setStatus(PaymentStatus.SUCCESS);
+        featuredPayment.setPaidAt(LocalDateTime.now());
         featuredPaymentRepository.save(featuredPayment);
         featuredRequest.setStatus(FeaturedRequestStatus.PAID);
 

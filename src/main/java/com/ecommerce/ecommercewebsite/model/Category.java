@@ -18,6 +18,6 @@ public class Category {
     @Lob
     @Column(columnDefinition = "LONGBLOB")
     private byte[] categoryImage;
-
+    
 
 }

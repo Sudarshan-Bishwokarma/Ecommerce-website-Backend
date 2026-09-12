@@ -41,7 +41,7 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.PENDING_PAYMENT;
     private LocalDateTime createdAt;
-    
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VendorOrder> vendorOrders = new ArrayList<>();
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -49,4 +49,4 @@ public class Order {
 
 
 }
-
+    

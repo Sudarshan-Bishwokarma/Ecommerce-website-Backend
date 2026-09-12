@@ -9,6 +9,7 @@ import com.ecommerce.ecommercewebsite.mappers.FeaturedPlanMapper;
 import com.ecommerce.ecommercewebsite.mappers.VendorFeaturedPlanMapper;
 import com.ecommerce.ecommercewebsite.model.FeaturedPlan;
 import com.ecommerce.ecommercewebsite.repositories.FeaturedPlanRepository;
+import com.ecommerce.ecommercewebsite.repositories.FeaturedRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,8 @@ public class FeaturedPlanServiceImpl implements FeaturedPlanService {
     private FeaturedPlanMapper featuredPlanMapper;
     @Autowired
     private VendorFeaturedPlanMapper vendorFeaturedPlanMapper;
+    @Autowired
+    private FeaturedRequestRepository featuredRequestRepository;
 
     @Override
     public FeaturedPlanResponseDTO createPlan(FeaturedPlanRequestDTO requestDTO) {
@@ -32,6 +35,7 @@ public class FeaturedPlanServiceImpl implements FeaturedPlanService {
         featuredPlan.setName(requestDTO.getName());
         featuredPlan.setDurationDays(requestDTO.getDurationDays());
         featuredPlan.setPrice(requestDTO.getPrice());
+        featuredPlan.setFeaturePlanType(requestDTO.getFeaturePlanType());
         featuredPlan.setActive(true);
         FeaturedPlan savedPlan = featuredPlanRepository.save(featuredPlan);
         FeaturedPlanResponseDTO responseDTO = featuredPlanMapper.mapToDTO(savedPlan);
@@ -52,6 +56,11 @@ public class FeaturedPlanServiceImpl implements FeaturedPlanService {
     @Override
     public FeaturedPlanResponseDTO updatePlan(FeaturedPlanRequestDTO requestDTO, Long featuredPlanId) {
         FeaturedPlan plan = featuredPlanRepository.findById(featuredPlanId).orElseThrow(() -> new ApiException(FeaturedPlanErrorCode.FEATURED_PLAN_NOT_FOUND));
+        boolean exists = featuredRequestRepository.existsByFeaturedPlanId(featuredPlanId);
+
+        if (exists) {
+            throw new ApiException(FeaturedPlanErrorCode.FEATURED_PLAN_ALREADY_IN_USE);
+        }
         plan.setName(requestDTO.getName());
         plan.setPrice(requestDTO.getPrice());
         plan.setDurationDays(requestDTO.getDurationDays());
@@ -73,6 +82,14 @@ public class FeaturedPlanServiceImpl implements FeaturedPlanService {
         return responseDTO;
     }
 
+    @Override
+    public FeaturedPlanResponseDTO getPlanById(Long id) {
+        FeaturedPlan plan = featuredPlanRepository.findById(id).orElseThrow(() -> new ApiException(FeaturedPlanErrorCode.FEATURED_PLAN_NOT_FOUND));
+        FeaturedPlanResponseDTO responseDTO = featuredPlanMapper.mapToDTO(plan);
+        return responseDTO;
+
+    }
+
     // for vendor
     @Override
     public List<VendorFeaturedPlanResponseDTO> getActivePlans() {
@@ -82,5 +99,16 @@ public class FeaturedPlanServiceImpl implements FeaturedPlanService {
             responseDTOs.add(vendorFeaturedPlanMapper.mapToDTO(plan));
         }
         return responseDTOs;
+    }
+
+    public void deletePlan(Long id) {
+        if (featuredRequestRepository.existsByFeaturedPlanId(id)) {
+            throw new ApiException(FeaturedPlanErrorCode.FEATURED_PLAN_IN_USE);
+        }
+
+        FeaturedPlan plan = featuredPlanRepository.findById(id)
+                .orElseThrow(() -> new ApiException(FeaturedPlanErrorCode.FEATURED_PLAN_NOT_FOUND));
+
+        featuredPlanRepository.delete(plan);
     }
 }
