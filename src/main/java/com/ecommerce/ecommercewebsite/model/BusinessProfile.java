@@ -19,6 +19,7 @@ public class BusinessProfile {
     // business info
     private String businessName;
     private String businessAddress;
+    @Column(length = 1000)
     private String businessDescription;
     private Long categoryId;
     // contact  information
